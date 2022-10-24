@@ -1,0 +1,58 @@
+---
+- hosts: all
+  vars:
+    local_app_dir: "/home/ludovico99/Scrivania/Progetto"
+    remote_home: "/home/ec2-user"
+    remote_app_dir: "{{remote_home}}/Progetto"
+
+  tasks:
+    - name: copy application directory
+      copy:
+        src: "{{ local_app_dir }}/"
+        dest: "{{ remote_app_dir }}"
+      register: app  # save task output 
+
+    - name: install python 3
+      become: yes # we need root privileges 
+      yum:
+        name: python3
+        state: present
+        
+    - name: install gnome-terminal
+      become: yes # we need root privileges 
+      yum:
+        name: gnome-terminal
+        
+    - name: install grpcio
+      become: yes
+      pip:
+        name: grpcio
+        executable: pip3
+
+    - name: install grpcio-tools
+      become: yes
+      pip:
+        name: grpcio-tools
+        executable: pip3
+
+    - name: copy systemd unit file
+      become: yes 
+      copy:
+        src: "progetto.service"
+        dest: "/etc/systemd/system/"
+
+    - name: enable and start systemd service
+      become: yes 
+      systemd:
+        daemon_reload: yes
+        state: restarted
+        name: "progetto.service"
+        enabled: yes
+      when: app.changed # only restart if new version was uploaded
+
+
+
+
+
+
+

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel ="stylesheet" href="/static/style.css">
+    <title>SEAt | configurazione lido</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-customclass navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+          <img src='/static/images/title.png' style="height: 40px;" />
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <a class="nav-link" href="/admin">Prenotazioni</a>
+            <a class="nav-link" href="/admin/pagamenti">Pagamenti</a>
+            <a class="nav-link" href="/admin/recensioni">Recensioni</a>
+            <a class="nav-link" href="/admin/accounting">Il mio lido</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div style="margin-top: 3%; margin-left: 15%;display: flex;">
+      <h1 class="display-5">Inserisci i nuovi dati da registrare:</h1>
+    </div>
+    <div class="row" style="margin-left:15%; margin-right:15%; margin-bottom:3%; ">
+      
+      <div style ="display:flex">
+        <div style="height:1vh; width:50%"></div> 
+        <div style="padding-left: 15%; padding-right: 50%;">
+          {% with messages = get_flashed_messages()%}
+            {% if messages %}
+              {% for message in messages %}
+                
+              <div class="alert alert-warning alert-dismissible fade show"  role="alert">
+                {{message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div> 
+      <!-- FORM PER INSERIRE I NUOVI DATI -->
+      <form method="POST" style="margin-bottom: 10%;margin-top: 10%;" action="/admin/accounting/configurazione_lido">
+
+        
+        <div class="mb-3 row" style="display: flex;">
+      
+          <!-- Lettini input -->
+          <label class="col-sm-2 col-form-label" style="max-width: 100px;">Lettini</label>
+          <div class="col-sm-10" style ="max-width: 150px;">
+            <input type="number" class="form-control" name="num_lettini">
+          </div>
+        
+
+          <!-- Sdraio input -->
+          <label class="col-sm-2 col-form-label" style="max-width: 100px;">Sdraio</label>
+          <div class="col-sm-10" style ="max-width: 150px;">
+            <input type="number" class="form-control" name="num_sdraio">
+          </div>
+        
+
+          <!-- Sedie input -->
+          <label class="col-sm-2 col-form-label" style="max-width: 100px;">Sedie</label>
+          <div class="col-sm-10" style ="max-width: 150px;">
+            <input type="number" class="form-control" name="num_sedie">
+          </div>
+        </div>
+        
+        
+        <!-- File input -->
+        <div class="mb-3 row">
+          <label class="col-sm-2 col-form-label">File</label>
+          <div class="col-sm-10">
+            <input type="number" class="form-control" name="num_file" id="file" oninput="func()">
+          </div>
+        </div>
+
+        <!-- Numero in ogni fila input (da costruire dinamicamente) -->
+        <div class="mb-3 row" id="file_input"></div>
+
+
+        <!-- Submit input -->
+        <div class="inputBox" style="margin-top: 5%; align-items: flex-end;">
+          <input type="submit" style="background: #92A5E7; color: #fff;" value="Invia"/>
+        </div>
+      </form>
+     
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      function func(){
+        var file_input = document.getElementById('file_input');
+        var numero_righe = document.getElementById('file').value;
+        var k;
+        var t;
+        var input_tags = file_input.getElementsByTagName('input');
+
+        for(t=0; t<input_tags.length;){
+          file_input.removeChild(input_tags[t]);
+        }
+        for(k=0; k<numero_righe; k++){
+          var new_field = document.createElement('input');
+          new_field.setAttribute('type','number');
+          name = 'numInRow' + String(k+1);
+          placeholder = "Inserire le postazioni nella fila " + String(k+1);
+          new_field.setAttribute('name',name);
+          new_field.setAttribute('class','form-control');
+          new_field.setAttribute('style','margin-bottom:5px;');
+          new_field.setAttribute('placeholder',placeholder);
+          file_input.appendChild(new_field);
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel ="stylesheet" href="/static/style.css">
+    <title>SEAt | recensioni</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-customclass navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+          <img src='/static/images/title.png' style="height: 40px;" />
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <a class="nav-link" href="/utente">Prenotazioni</a>
+            <a class="nav-link" href="/utente/analisi_del_sentimento">Analisi del sentimento</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link active dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Recensioni</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/utente/nuova_recensione">Nuova Recensione</a></li>
+                <li><a class="dropdown-item" href="#">Tutte le recensioni</a></li>
+              </ul>
+            </li>
+            <a class="nav-link" href="/utente/accounting">Il mio account</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div style="margin-top: 5%; margin-left: 15%;"></div>
+    
+    <div style="margin-left:15%; margin-bottom:10%; margin-right:15%; margin-top: 2%;">
+        
+      <div class="form-floating mb-3">
+        <input type="text" class="form-control" placeholder="example" oninput="func()" id="input_search">
+        <label for="floatingInput">Cerca per lido</label>
+      </div>
+      
+      
+      <div class="accordion" id="accordionPanelsStayOpenExample">
+        
+        {% for r in reviews %}  
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="panelsStayOpen-headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true" aria-controls="panelsStayOpen-collapseOne">
+                    {% for i in range(0, r[0]) %}
+                        <span class="fa fa-star checked"></span>
+                    {% endfor %}
+                    {% for i in range(r[0], 5) %}
+                        <span class="fa fa-star"></span>
+                    {% endfor %}
+                    <div style="width:15px;"></div>
+                    {{r[3]}} | {{ r[1] }}
+                </button>
+              </h2>
+              <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show" aria-labelledby="panelsStayOpen-headingOne">
+                <div class="accordion-body">
+                  {{r[2]}}
+                </div>
+              </div>
+            </div>
+        {% endfor %}  
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script>
+      function func() {
+        
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById('input_search');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("accordionPanelsStayOpenExample");
+        h2 = ul.getElementsByTagName('h2');
+        console.log("qui ho: "+h2.length);
+        
+        
+        for (i = 0; i < h2.length; i++) {
+          button = h2[i].getElementsByTagName("button")[0];
+          txtValue = button.textContent || button.innerText;
+          array = txtValue.split(" | ");
+          txtValue = array[0];
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            h2[i].style.display = "";
+            h2[i].parentNode.style.display = "";
+          } else {
+            h2[i].style.display = "none";
+            h2[i].parentNode.style.display = "none";
+          }
+        }
+      }
+      </script>
+  </body>
+</html>

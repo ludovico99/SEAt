@@ -1,0 +1,104 @@
+LIBRERIE DA SCARICARE:
+1) scaricare geopy per calcolare latitudine e longitudine: python -m pip install geopy
+2) scaricare haversine per calcolare la distanza tra due punti: python -m pip install haversine
+3) python -m pip install certifi 
+4) python -m pip install numpy
+5) python -m pip install statistics
+6) python -m pip install grpcio
+7) python -m pip install grpcio-tools
+8) python -m pip install boto3
+
+
+PASSI PER COMPILARE:
+1)  python -m grpc_tools.protoc -I. --python_out=.\accountingService --grpc_python_out=.\accountingService .\proto\grpc.proto
+    python -m grpc_tools.protoc -I. --python_out=.\apiGateway --grpc_python_out=.\apiGateway .\proto\grpc.proto
+    python -m grpc_tools.protoc -I. --python_out=.\reservationService --grpc_python_out=.\reservationService .\proto\grpc.proto
+    python -m grpc_tools.protoc -I. --python_out=.\quoteService --grpc_python_out=.\quoteService .\proto\grpc.proto
+    python -m grpc_tools.protoc -I. --python_out=.\reviewService --grpc_python_out=.\reviewService .\proto\grpc.proto
+    python -m grpc_tools.protoc -I. --python_out=.\paymentService --grpc_python_out=.\paymentService .\proto\grpc.proto
+
+2)
+    python .\apiGateway\main.py
+    python .\reservationService\main.py
+    python .\quoteService\main.py
+    python .\reviewService\main.py
+    python .\emailService\main.py
+
+
+LINK AL GRANT DI AMAZON: 
+https://www.awsacademy.com/LMS_Login
+
+Oss: Ogni volta che viene avviata la sessione di laboratorio bisogna modificare le credenziali(<-- Inserire il contenuto di AWS Details nel lab -> AWS CLI):
+    1) Windows: C:\Users\ludov\.aws\credentials 
+    2) Linux: $gedit ~/.aws/credentials
+    ~ <-- alt + 126 (Windows), alt gr + ì in Linux
+
+INSTALLARE BOTO3: python3 -m pip install boto3
+
+Su macchina ec2: 
+LA CHIAVE ME-KEY (Private-key) E' STATA CREATA IN ec2 --> rete e sicurezza --> coppie di chiave. Si utilizza per 
+connettersi alle istanze EC2 create (Viene specificata nel comando).
+
+1) Creare la macchina virtuale su Aws ec2
+2) Aggiungere alla VM il security group per accettare connessioni ssh
+3) sudo yum install python3
+4) sudo pip3 install grpcio
+5) sudo pip3 install grpcio-tools
+6) scp -i "me-key.pem" -r ./Progetto/ ec2-user@54.174.246.244:/home/ec2-user/
+7) ssh -i "me-key.pem" ec2-user@54.174.246.244
+Per eseguire sulla stessa macchina avviare due connessione ssh
+
+Deploy su istanza ec2 con ansible:
+
+Creare il file <nome>.yaml con i comandi da eseguire sulla MV
+Creare hosts.ini specificando la chiave privata "me-key.pem" e gli indirizzi ip delle istanze di macchine virtuali
+Creare il .service per eseguire l'applicazione come servizio
+Crare file .sh con i comandi da eseguire su terminali
+
+1) ansible-playbook -i galleryInventory.aws_ec2.yaml \
+--private-key=/home/ludovico99/Scrivania/me-key.pem -u ec2-user \
+deploy_gallery.yaml
+
+2) ansible-playbook -v -i hosts.ini deploy.yaml
+
+
+MICROSERVICES PORTS:
+50055 <-- paymentService
+50054 <-- reviewService
+50053 <--- quoteService
+50052 <-- accountingService
+50051 <-- reservationService
+AMQP port <-- EmailService
+
+TABELLE NEL DATABASE:
+* DETTAGLI LIDO: ha il totale delle sdraio, lettini ecc...
+* POSTAZIONI PER FILA: lido, ogni fila quanti ombrelloni ha (il totale si calcola)
+* PRENOTAZIONI: memorizza i dettagli delle prenotazioni di tutti
+
+  -- DA MODIFICARE GIORNALMENTE --
+* MAGAZZINO: ha la disponibilità odierna dei pezzi
+* POSTAZIONI: indica nel giorno odierno quali postazioni sono occupate
+
+RABBITMQ:
+1) Scaricare il server su https://www.rabbitmq.com/download.html
+2) installare pika in python: python -m pip install pika --upgrade
+
+Inserire cartella sbin di RABBITMQ nel path per sfruttare rabbitmq CLI!!!
+rabbitmqctl help
+
+
+ISTANZIAZIONE PROGETTO - da aggiornare (!)
+
+[FASE 1: Set up] -----------------------------------------------------------
+1) creare il database con un'automazione
+2) creare i container e copiarci sopra il codice
+3) far partire il codice dei microservizi e iniziare l'ascolto (NB: il server che riceve le richieste con gRPC deve essere sempre attivo)
+
+
+PER FAR PARTIRE IL SERVER FLASK andare nella cartella dove c'è app.py:
+set FLASK_APP=app.py
+set FLASK_ENV=development
+flask run -p 80 oppure python ./app.py
+
+
+

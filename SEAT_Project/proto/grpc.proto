@@ -1,0 +1,289 @@
+syntax = "proto3";
+
+package proto;
+import "google/protobuf/timestamp.proto";
+
+// ------------ Accounting Service ---------------
+service Accounting {
+    rpc configureBeachClub(configurationRequest) returns (response);
+    rpc registerAccount(registrationRequest) returns (response);
+    rpc login(loginRequest) returns (session);
+    rpc updateCredentials(updateRequest) returns (session);
+    rpc deleteAccount (deleteRequest) returns (response);
+    rpc getAllBeachClubUsername (empty) returns (usernameResponse);
+    rpc getAllBeachClubInCity (cityRequest) returns (usernameResponse);
+    rpc getBeachClubDetails(reviewRequest) returns (adminOptions);
+    rpc getMatrix(reviewRequest) returns (matrix);
+}
+
+message cityRequest{
+    string city = 1;
+}
+
+message matrix {
+    repeated int32 numInRow = 1;
+}
+
+message usernameResponse {
+    repeated string usernameBeachClub = 1;
+}
+
+message empty{}
+
+message deleteRequest {
+    string username = 1;
+    bool admin = 2;
+}
+
+
+message updateRequest {
+    string username = 1;
+    string newPassword = 3;
+    string newEmail = 4;
+    bool admin = 5; 
+    adminOptions opt = 6;
+}
+
+
+message registrationRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+    bool admin = 4;        //indica il tipo di utente
+    adminOptions opt = 5;
+}
+
+message loginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message adminOptions {
+    string beachClubName = 1;
+    string location = 2;
+    string cardId = 3;
+    int32 cvc = 4;
+    bool ristorazione = 5;
+    bool bar = 6;
+    bool campi = 7;
+    bool animazione = 8;
+    bool palestra = 9;   
+}
+
+message response {
+    bool operationResult = 1;
+    string errorMessage = 2;
+}
+
+message session {
+    repeated dictionary dict = 1;
+}
+
+message dictionary {
+    string key = 1;
+    string value = 2;
+}
+
+
+// ------------ Reservation Service ---------------
+
+service Reservation {
+    rpc getListOfProposal(proposalRequest) returns (proposalResponse);
+    rpc reserve(reservationRequest) returns (response);
+    rpc manualReserve(manualReservationRequest) returns (response);
+    rpc getReservedSeats(reservedSeatsRequest) returns (reservedSeatsResponse);
+}
+
+message reservedSeatsRequest{
+    string beachClubId = 1;
+    google.protobuf.Timestamp date = 2;
+}
+
+message reservedSeatsResponse{
+    repeated reservation reservation= 1;
+}
+
+message reservation {
+    string ombrelloneId = 1;
+    string userId = 2;
+}
+
+message manualReservationRequest{
+    string beachClubId = 1;
+    string customer = 2;
+    repeated string ombrelloneId  = 3;
+    int32 numLettini = 4;
+    int32 numSdraio = 5;
+    int32 numChair = 6;   
+}
+
+message proposalResponse {
+    repeated proposal offerta = 1;
+}
+message proposal {
+    string lido_id = 1;
+    string city = 2;
+    float distance = 3;
+    float price = 4;
+    float averageReview = 5;
+    int32 index = 6;
+}
+
+
+message configurationRequest {
+    int32 numRows = 1;      // definisce la dimensione del seguente array
+    numSeatByRow array = 2;
+    int32 numLettini = 3;
+    int32 numSdraio = 4;
+    int32 numChair = 5;
+    session sessione = 6;
+
+}
+
+message numSeatByRow {
+    repeated int32 numSeatInRow = 1;
+} 
+
+message proposalRequest {
+    string location = 1;
+    int32 numRow  = 2;
+    int32 numBeachUmbrella = 3;
+    int32 numLettini = 4;
+    int32 numSdraio = 5;
+    int32 numChair = 6;
+    google.protobuf.Timestamp fromDate = 7;
+    google.protobuf.Timestamp toDate = 8;
+    int32 maxPrice = 9;
+    session sessione = 10;
+}
+
+message reservationRequest {
+    string beachClubId = 1;
+    int32 numRow  = 2;
+    int32 numUmbrella = 3;
+    int32 numLettini = 4;
+    int32 numSdraio = 5;
+    int32 numChair = 6;
+    google.protobuf.Timestamp fromDate = 7;
+    google.protobuf.Timestamp toDate = 8;
+    int32 price = 9;
+    bool payOnline = 10;
+    session sessione = 11;
+    float distance = 12;
+    float budgetDifference = 13;
+    int32 idCard = 14;
+
+}
+
+// ------------ Quote Service ---------------
+
+service Quote {
+    rpc insertPrices (priceRequest) returns (response);
+    rpc computeQuotes(quoteForm) returns (quoteResponse);
+}
+
+
+message priceRequest {
+    int32 priceOmbrellone = 1;
+    int32 priceSdraio = 2;
+    int32 priceLettino =3 ;
+    int32 priceSedia = 4;
+    int32 incrPrimeFile = 5;
+    int32 incrAltaStagione = 6;
+    int32 incrBassaStagione = 7;
+    int32 incrMediaStagione = 8;
+    string username = 9;
+}
+
+message quoteForm {
+    int32 numRow  = 1;
+    int32 numUmbrella = 2;
+    int32 numLettini = 3;
+    int32 numSdraio = 4;
+    int32 numChair = 5;
+    google.protobuf.Timestamp fromDate = 6;
+    google.protobuf.Timestamp toDate = 7;
+    session sessione = 8;
+}
+
+message quoteResponse {
+    repeated quote quotes = 1;
+}
+
+message quote {
+    string beachClub=1;
+    int32 computedPrice=2;
+}
+
+
+// ------------ Review Service ---------------
+
+service Review {
+    rpc review(reviewDetails) returns (response);
+    rpc getAllReviewsOfBeachClub(reviewRequest) returns (reviewResponse);
+    rpc getAverageScoreOfBeachClub(reviewRequest) returns (getAverageResponse);
+    rpc sentimentAnalysis(sentimentRequest) returns (analysisOutput);
+}
+
+message sentimentRequest{
+    string city = 1;
+}
+
+message analysisOutput{
+    repeated analysisData dati = 1;
+}
+
+message analysisData{
+    string mmYY = 1;
+    repeated string output = 2;
+}
+
+message reviewDetails {
+    string usernameBeachClub = 1;
+    int32 star = 2;
+    string reviewDetail = 3;
+    string comment = 4;
+}
+
+message reviewRequest {
+    string usernameBeachClub = 1;
+}
+
+message reviewResponse {
+    repeated reviewDetails reviews = 1;
+}
+
+message getAverageResponse {
+    float average = 1;
+}
+
+// ------------ Payment Service ---------------
+
+service Payment {
+    rpc deleteCard (deleteCardRequest) returns (response);
+    rpc insertCreditCard(creditDetails) returns (response);
+    rpc showCards (session) returns (cardsResponse);
+}
+
+message deleteCardRequest {
+    string username = 1;
+    string cardId = 2;
+}
+
+message creditDetails {
+    string username = 1;
+    string cardId = 2;
+    int32 credito = 3;
+    int32 cvc = 4;
+}
+
+message cardsResponse {
+    repeated cardDetails cards = 1;
+}
+
+message cardDetails {
+    string cardId = 1;
+    int32 credito = 2;
+    int32 cvc = 3;
+    int32 id = 4;
+}

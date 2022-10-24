@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel ="stylesheet" href="/static/style.css">
+    <title>SEAt | carte</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-customclass navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+          <img src='/static/images/title.png' style="height: 40px;" />
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <a class="nav-link" href="/utente">Prenotazioni</a>
+            <a class="nav-link" href="/utente/analisi_del_sentimento">Analisi del sentimento</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link active dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Recensioni</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/utente/nuova_recensione">Nuova Recensione</a></li>
+                <li><a class="dropdown-item" href="/utente/recensioni">Tutte le recensioni</a></li>
+              </ul>
+            </li>
+            <a class="nav-link active" href="/utente/accounting">Il mio account</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div style="margin-top: 3%; margin-left: 15%;">
+      <div>
+        <h1 class="display-5">Inserisci i dettagli della carta:</h1>
+        <p class="lead">Se la carta esiste i dettagli verranno sovrascritti; clicca su ELIMINA per cancellare la carta</p> 
+      </div>
+
+      <div style="padding-left: 15%; padding-right: 50%;">
+        {% with messages = get_flashed_messages()%}
+          {% if messages %}
+            {% for message in messages %}
+              
+            <div class="alert alert-warning alert-dismissible fade show"  role="alert">
+              {{message}}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+    </div>
+    
+    <div class="row" style="margin-left:15%; margin-right:15%; margin-bottom:3%; ">
+
+      <!-- FORM PER INSERIRE I NUOVI DETTAGLI DELLA CARTA  -->
+      <form method="POST" style="margin-bottom: 10%;margin-top: 5%;" action="/utente/accounting/carte">
+      
+        <div class="card mb-3" style="max-width: 70%; background: #c7d2f3; margin: auto;">
+          <div class="row g-0" style="margin-left: 2%;">
+
+            <div class="col-md-8">
+              <div class="card-body">
+                <h1 class="card-title display-5">Carta SEAt</h1>
+                <!-- <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p> -->
+                
+                
+
+                  <!-- Card number input -->
+                  <div class="mb-3 row">
+                    <div class="col-sm-10 inputBox" style="margin-top: 2%;">
+                      <input type="number" class="form-control" name="new_card_number" placeholder="card number" required>
+                    </div>
+                  </div>
+                
+                  <!-- CVC input -->
+                  <div class="mb-3 row" style="margin-top: 2%;">
+                    <div class="col-sm-10 inputBox">
+                      <input type="number" class="form-control" name="new_cvc" placeholder="cvc" required>
+                    </div>
+                  </div>                
+              </div>
+            </div>
+            <div class="col-md-4" style="margin-bottom: 0%; margin-right: 0%; align-self: flex-end;">
+              <img src="/static/images/img.png" class="img-fluid rounded-start" style="margin-bottom: 0%;">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- credito input -->
+        <div class="mb-3 row" style="margin-top: 5%;">
+          <div class="col-sm-10">
+            <input type="number" class="form-control" name="new_credit" placeholder="credito">
+          </div>
+        </div>
+        <div style="display: flex;">
+
+          <!-- Submit input -->
+          <div class="inputBox" style="margin-top: 2%; margin-right:1%;">
+            <input type="submit" style="background: #92A5E7; color: #fff;" name="Submit" value="Submit"/>
+          </div>
+
+          <!-- Delete input -->
+          <div class="inputBox" style="margin-top: 2%;">
+            <input type="submit" style="background: #92A5E7; color: #fff;" name="Elimina" value="Elimina"/>
+          </div>
+        </div>
+
+
+      </form> 
+      
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  </body>
+</html>

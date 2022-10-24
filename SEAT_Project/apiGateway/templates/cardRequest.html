@@ -1,0 +1,45 @@
+{% extends 'offerteUser.html' %}
+{% block modal%}
+<div class="modal hide fade in" data-backdrop="static" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Seleziona la carta con cui pagare</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" action="/utente/offerte/pagamento">
+            <div class="modal-body">
+            
+            {% for card in cards %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="{{card[3]}}" name="selectedNum">
+                    <label class="form-check-label" for="defaultCheck1">
+                        Numero di carta: {{card[0]}}
+                    </label>
+                </div>
+            {%endfor%}
+            
+            </div>
+
+            <div class="modal-footer inputBox">
+              <input type="submit" style="background: #92A5E7; color: #fff;" value="Salva"/>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block script %}
+<script>
+  var mod = document.getElementById('exampleModal');
+  console.log("sono qui")
+  document.addEventListener("DOMContentLoaded", function(){
+    console.log("window is loaded");
+    const modalEl = new bootstrap.Modal(mod);
+    modalEl.show();
+    // mod.modal("show");
+  });
+  // document.ready(function(){
+  //   })
+</script>
+{% endblock %}  

@@ -1,0 +1,8 @@
+[Unit]
+Description=Simple systemd service for Progetto.
+[Service]
+Type=simple
+WorkingDirectory=/home/ec2-user/Progetto
+ExecStart=/bin/bash /home/ec2-user/Progetto/run.sh
+[Install]
+WantedBy=multi-user.target
