@@ -7,6 +7,25 @@ LIBRERIE DA SCARICARE:
 6) python -m pip install grpcio
 7) python -m pip install grpcio-tools
 8) python -m pip install boto3
+9) pip install geopy
+10 ) pip install flask
+
+
+COMANDI DOCKER:
+sudo docker ps -a
+sudo docker rm -f <container-id> <-- separati da spazi
+sudo docker build -t <tag> .
+sudo docker run -dp 3000:3000 <tag>
+sudo docker image rmi -f <container-id>
+
+sudo docker-compose up 
+sudo docker-compose up --build
+
+sudo docker-compose stop
+
+
+sudo docker image ls
+
 
 
 PASSI PER COMPILARE:
@@ -30,10 +49,10 @@ https://www.awsacademy.com/LMS_Login
 
 Oss: Ogni volta che viene avviata la sessione di laboratorio bisogna modificare le credenziali(<-- Inserire il contenuto di AWS Details nel lab -> AWS CLI):
     1) Windows: C:\Users\ludov\.aws\credentials 
-    2) Linux: $gedit ~/.aws/credentials
+    2) Linux: $ gedit ~/.aws/credentials
     ~ <-- alt + 126 (Windows), alt gr + ì in Linux
 
-INSTALLARE BOTO3: python3 -m pip install boto3
+INSTALLARE BOTO3: python -m pip install boto3
 
 Su macchina ec2: 
 LA CHIAVE ME-KEY (Private-key) E' STATA CREATA IN ec2 --> rete e sicurezza --> coppie di chiave. Si utilizza per 
@@ -90,9 +109,8 @@ rabbitmqctl help
 ISTANZIAZIONE PROGETTO - da aggiornare (!)
 
 [FASE 1: Set up] -----------------------------------------------------------
-1) creare il database con un'automazione
-2) creare i container e copiarci sopra il codice
-3) far partire il codice dei microservizi e iniziare l'ascolto (NB: il server che riceve le richieste con gRPC deve essere sempre attivo)
+1) creare i container e copiarci sopra il codice
+2) far partire il codice dei microservizi e iniziare l'ascolto (NB: il server che riceve le richieste con gRPC deve essere sempre attivo)
 
 
 PER FAR PARTIRE IL SERVER FLASK andare nella cartella dove c'è app.py:

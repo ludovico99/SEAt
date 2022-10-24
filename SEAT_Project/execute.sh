@@ -1,0 +1,6 @@
+gnome-terminal -- sh -c 'python3 ./accountingService/main.py'
+gnome-terminal -- sh -c 'python3 ./emailService/main.py'
+gnome-terminal -- sh -c 'python3 ./reservationService/main.py'
+gnome-terminal -- sh -c 'python3 ./paymentService/main.py'
+gnome-terminal -- sh -c 'python3 ./quoteService/main.py'
+gnome-terminal -- sh -c 'python3 ./reviewService/main.py'

@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  front-end:
+    build: ./apiGateway
+    ports:
+      - "80:5000"
+    volumes:
+      - .:/apiGateway
+    environment:
+      FLASK_ENV: development
+    depends_on:
+      - accounting
+  
+  accounting:
+    build: ./accountingService
+    volumes:
+      - .:/accountingService
+    ports:
+      - "50052:50052"
