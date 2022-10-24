@@ -8,6 +8,11 @@ services:
       - .:/apiGateway
     environment:
       FLASK_ENV: development
+
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.2
+
     depends_on:
       - accounting
   
@@ -17,3 +22,15 @@ services:
       - .:/accountingService
     ports:
       - "50052:50052"
+
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.3
+
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+            #docker-compose v3+ do not use ip_range
+          

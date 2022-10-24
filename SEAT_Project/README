@@ -16,15 +16,19 @@ sudo docker ps -a
 sudo docker rm -f <container-id> <-- separati da spazi
 sudo docker build -t <tag> .
 sudo docker run -dp 3000:3000 <tag>
-sudo docker image rmi -f <container-id>
 
 sudo docker-compose up 
 sudo docker-compose up --build
-
 sudo docker-compose stop
 
-
 sudo docker image ls
+sudo docker image rmi -f <container-id>
+
+sudo docker network ls
+sudo docker network inspect <networkId> 
+sudo docker network rm  111496a97204
+sudo docker network inspect -f '{{json .Containers}}' 111496a97204 | jq '.[] | .Name + ":" + .IPv4Address'
+
 
 
 

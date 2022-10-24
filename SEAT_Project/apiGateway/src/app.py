@@ -309,35 +309,29 @@ def configureCards():
 
 @app.route('/login', methods=('GET','POST'))
 def login():
-    if request.method == "POST":
-        username = request.form['user']
-        password = request.form['pwd']
+    try:
+        if request.method == "POST":
+            username = request.form['user']
+            password = request.form['pwd']
 
-        accountingChannel = grpc.insecure_channel("{}:50052".format(iPAddress))
-        stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
-
-        sessione = stubAccounting.login(grpc_pb2.loginRequest(username=username, password=password))
-        
-        if len(sessione.dict) == 0:
-            flash("login fallito, riprovare con altre credenziali")
-            return redirect('/login')
-
-        try:                                                    #0: username; 1: tipoUtente; 2: email
-            session['username'] = sessione.dict[0].value
-            session['tipoUtente'] = sessione.dict[1].value
-            session['email'] = sessione.dict[2].value
+            sessione,matrix= aG.login (username, password)
             
-            if sessione.dict[1].value == "True":
-                
-                response = stubAccounting.getMatrix(grpc_pb2.reviewRequest(usernameBeachClub = session['username']))
-                matrix = []
-                for i in response.numInRow:
-                    matrix.append(i)
+            if len(sessione) == 0:
+                flash("login fallito, riprovare con altre credenziali")
+                return redirect('/login')
+
+                                                            #0: username; 1: tipoUtente; 2: email
+            session['username'] = sessione['username']
+            session['tipoUtente'] = sessione['tipoUtente']
+            session['email'] = sessione['email']
+            
+            if sessione['tipoUtente'] == True:
                 session['matrix'] = matrix
                 return redirect('/admin')
             else :
                 return redirect('/utente')
-        except Exception as e:
+
+    except Exception as e:
             flash(repr(e))
             flash("login fallito, riprovare con altre credenziali")
             return redirect('/login')

@@ -73,7 +73,8 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
 
         except Exception as e:
             print(repr(e))
-            self.connectionSAGA.close()
+            if self.connectionSAGA != None:
+                self.connectionSAGA.close()
             return False,"Error in establishing connections and queues"
         return True,"Connection and queues are correctly established "
 
@@ -718,6 +719,7 @@ def grpc_server (service):
     grpc_pb2_grpc.add_AccountingServicer_to_server(service, server)
     print('Starting ACCOUNTING SERVICE. Listening on port 50052.')
     server.add_insecure_port('[::]:50052')
+    #server.add_insecure_port('172.24.0.3:50052')
     server.start()
     try:
         while True:

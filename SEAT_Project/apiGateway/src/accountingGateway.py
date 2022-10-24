@@ -16,7 +16,8 @@ def isValid(email):
 class AccountingGateway():
     
     def __init__(self):
-        self.accountingChannel = grpc.insecure_channel("{}:50052".format("localhost"))
+        #self.accountingChannel = grpc.insecure_channel("{}:50052".format("localhost"))
+        self.accountingChannel = grpc.insecure_channel("{}:50052".format("172.24.0.3"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)   
     
     def changeConfiguration(self,numRows, numLettini, numSdraio, numChair, postiPerFila, username, tipoUtente, email):
@@ -119,3 +120,26 @@ class AccountingGateway():
             print(repr(e))
             return False, "An error has occurred"
        
+    def login (self,username, password):
+        try:
+            mySession = {}
+            matrix = []
+
+            sessione = self.stubAccounting.login(grpc_pb2.loginRequest(username=username, password=password))
+
+            mySession['username'] = sessione.dict[0].value
+            mySession['tipoUtente'] = sessione.dict[1].value
+            mySession['email'] = sessione.dict[2].value
+
+            if sessione.dict[1].value == "True":
+                
+                response = self.stubAccounting.getMatrix(grpc_pb2.reviewRequest(usernameBeachClub = username))
+                
+                for i in response.numInRow:
+                    matrix.append(i)
+                    
+            return mySession,matrix
+
+        except Exception as e:
+            print(repr(e))
+            return {},[]
