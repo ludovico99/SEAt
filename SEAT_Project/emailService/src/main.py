@@ -5,8 +5,9 @@ class EmailService (object):
 
     def __init__(self):
         try :
-            self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            #self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.connectionSAGA = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq:5672'))
 
             self.channel = self.connection.channel()
 

@@ -40,7 +40,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            pika.ConnectionParameters(host='rabbitmq:5672'))
 
             self.channelSAGA = self.connectionSAGA.channel()
 
@@ -273,7 +273,10 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         
         # AGGIUNTAAAA
         if len(repre)!=0:
-            return repre
+            dict.append(grpc_pb2.dictionary(key = "username", value=repre))
+            dict.append(grpc_pb2.dictionary(key = "dummy", value="dummy"))
+            response = grpc_pb2.session(dict = dict)
+            return response
         if data == None:
             response = grpc_pb2.session(dict = [])
             return response

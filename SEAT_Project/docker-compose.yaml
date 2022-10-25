@@ -11,8 +11,6 @@ services:
     build: ./apiGateway
     ports:
       - "80:5000"
-    volumes:
-      - .:/apiGateway
     environment:
       FLASK_ENV: development
     depends_on:
@@ -21,19 +19,30 @@ services:
     # networks:
     #   static-network:
     #     ipv4_address: 172.24.0.2
-
-    depends_on:
-      - accounting
   
   accounting:
     build: ./accountingService
     volumes:
-      - .:/accountingService
-      - ~/.aws/:/root/.aws:ro
+      - ~/.aws/:/home/.aws:ro
     ports:
       - "50052:50052"
     depends_on:
       - rabbitmq
+
+  # email:
+  #   build: ./emailService
+  #   depends_on:
+  #     - accounting
+
+  # payment: 
+  #   build: ./paymentService
+  #   volumes:
+  #     - .:/paymentService
+  #   ports:
+  #     - "50055:50055"
+  #   depends_on:
+  #     - accounting
+
     # networks:
     #   static-network:
     #     ipv4_address: 172.24.0.3
