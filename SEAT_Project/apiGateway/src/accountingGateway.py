@@ -17,7 +17,7 @@ class AccountingGateway():
     
     def __init__(self):
         #self.accountingChannel = grpc.insecure_channel("{}:50052".format("localhost"))
-        self.accountingChannel = grpc.insecure_channel("{}:50052".format("172.24.0.3"))
+        self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)   
     
     def changeConfiguration(self,numRows, numLettini, numSdraio, numChair, postiPerFila, username, tipoUtente, email):

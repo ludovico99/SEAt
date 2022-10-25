@@ -1,5 +1,12 @@
 version: "3.9"
 services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+    - "5672:5672"
+    - "15672:15672"
+    
   front-end:
     build: ./apiGateway
     ports:
@@ -8,10 +15,12 @@ services:
       - .:/apiGateway
     environment:
       FLASK_ENV: development
+    depends_on:
+      - accounting
 
-    networks:
-      static-network:
-        ipv4_address: 172.24.0.2
+    # networks:
+    #   static-network:
+    #     ipv4_address: 172.24.0.2
 
     depends_on:
       - accounting
@@ -20,17 +29,19 @@ services:
     build: ./accountingService
     volumes:
       - .:/accountingService
+      - ~/.aws/:/root/.aws:ro
     ports:
       - "50052:50052"
+    depends_on:
+      - rabbitmq
+    # networks:
+    #   static-network:
+    #     ipv4_address: 172.24.0.3
 
-    networks:
-      static-network:
-        ipv4_address: 172.24.0.3
-
-networks:
-  static-network:
-    ipam:
-      config:
-        - subnet: 172.24.0.0/16
+# networks:
+#   static-network:
+#     ipam:
+#       config:
+#         - subnet: 172.24.0.0/16
             #docker-compose v3+ do not use ip_range
           

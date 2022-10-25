@@ -40,7 +40,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelSAGA = self.connectionSAGA.channel()
 
@@ -268,18 +268,21 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         print("Il server ha ricevuto:")
         print(loginRequest.username, loginRequest.password)
         
-        data = self.db.scanDb("utenti", ['username', 'password'], [loginRequest.username, loginRequest.password])
+        data, repre = self.db.scanDb("utenti", ['username', 'password'], [loginRequest.username, loginRequest.password])
         dict = []
-
-        if data == None:
-             response = grpc_pb2.session(dict = [])
         
+        # AGGIUNTAAAA
+        if len(repre)!=0:
+            return repre
+        if data == None:
+            response = grpc_pb2.session(dict = [])
+            return response
         if len(data)!= 0:
             result = data[0]
             dict.append(grpc_pb2.dictionary(key = "username", value=result['username']))
             dict.append(grpc_pb2.dictionary(key = "tipoUtente", value=str(result['tipoUtente'])))
             dict.append(grpc_pb2.dictionary(key = "email", value=result['email']))
-
+    
         response = grpc_pb2.session(dict = dict)
         print("response", response)
         return response
@@ -586,7 +589,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """
         try :
             self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channel = self.connection.channel()
 

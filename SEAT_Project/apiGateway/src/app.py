@@ -325,7 +325,7 @@ def login():
             session['tipoUtente'] = sessione['tipoUtente']
             session['email'] = sessione['email']
             
-            if sessione['tipoUtente'] == True:
+            if sessione['tipoUtente'] == "True":
                 session['matrix'] = matrix
                 return redirect('/admin')
             else :

@@ -39,7 +39,7 @@ class DBUtils (object):
             table (string): table's name
 
         Returns:
-            dict[str,[dict[str,any]]]: A transaction in dynamoDB format
+            dict[str,[dict[str,172.20.0.3any]]]: A transaction in dynamoDB format
         """
         #key --> [[nomeAttribute, type, value]]
         transaction = {'Delete':{'Key':{},'TableName': table}}
@@ -146,9 +146,10 @@ class DBUtils (object):
                 response = dynamoDbTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
                 data.extend(response['Items']) 
         except Exception as e:
-            print(repr(e))
-            return None  
+            #print(repr(e))
+            #return None  
+            return None,repr(e)
             
-        return data
+        return data,[]
 
     
