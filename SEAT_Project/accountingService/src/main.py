@@ -268,15 +268,9 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         print("Il server ha ricevuto:")
         print(loginRequest.username, loginRequest.password)
         
-        data, repre = self.db.scanDb("utenti", ['username', 'password'], [loginRequest.username, loginRequest.password])
+        data = self.db.scanDb("utenti", ['username', 'password'], [loginRequest.username, loginRequest.password])
         dict = []
-        
-        # AGGIUNTAAAA
-        if len(repre)!=0:
-            dict.append(grpc_pb2.dictionary(key = "username", value=repre))
-            dict.append(grpc_pb2.dictionary(key = "dummy", value="dummy"))
-            response = grpc_pb2.session(dict = dict)
-            return response
+            
         if data == None:
             response = grpc_pb2.session(dict = [])
             return response

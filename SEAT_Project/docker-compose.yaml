@@ -1,11 +1,11 @@
 version: "3.9"
 services:
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-    - "5672:5672"
-    - "15672:15672"
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   ports:
+  #   - "5672:5672"
+  #   - "15672:15672"
     
   front-end:
     build: ./apiGateway
@@ -23,25 +23,56 @@ services:
   accounting:
     build: ./accountingService
     volumes:
-      - ~/.aws/:/home/.aws:ro
+     - ./accountingService/src:/home/accountingService
+    #   - ~/.aws/credentials:$HOME/.aws/credentials:ro
+      # - ~/.aws/config:$HOME/.aws/config:ro
     ports:
       - "50052:50052"
+    # depends_on:
+    #   - rabbitmq
+
+  email:
+    build: ./emailService
+    volumes:
+     - ./emailService/src:/home/emailService
     depends_on:
-      - rabbitmq
+      - accounting
 
-  # email:
-  #   build: ./emailService
-  #   depends_on:
-  #     - accounting
+  payment: 
+    build: ./paymentService
+    volumes:
+      - ./paymentService/src:/home/paymentService
+    ports:
+      - "50055:50055"
+    depends_on:
+      - accounting
 
-  # payment: 
-  #   build: ./paymentService
-  #   volumes:
-  #     - .:/paymentService
-  #   ports:
-  #     - "50055:50055"
-  #   depends_on:
-  #     - accounting
+  quote: 
+    build: ./quoteService
+    volumes:
+      - ./quoteService/src:/home/quoteService
+    ports:
+      - "50053:50053"
+    depends_on:
+      - accounting
+
+  reservation: 
+    build: ./reservationService
+    volumes:
+      - ./reservationService/src:/home/reservationService
+    ports:
+      - "50051:50051"
+    depends_on:
+      - accounting
+
+  review: 
+    build: ./reviewService
+    volumes:
+      - ./reviewService/src:/home/reviewService
+    ports:
+      - "50054:50054"
+    depends_on:
+      - accounting
 
     # networks:
     #   static-network:

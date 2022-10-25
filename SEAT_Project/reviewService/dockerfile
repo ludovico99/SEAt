@@ -2,8 +2,11 @@
 FROM python:3.7-alpine
 WORKDIR /home
 #RUN apk add --no-cache gcc musl-dev linux-headers
+RUN apk add --no-cache aws-cli
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-EXPOSE 50055
+EXPOSE 50054
+#COPY src accountingService
 COPY credentials /root/.aws/
-CMD ["python", "paymentService/main.py"]
+# WORKDIR /accountingService
+CMD ["python", "reviewService/main.py"]

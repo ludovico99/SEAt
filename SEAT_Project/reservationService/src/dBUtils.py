@@ -4,8 +4,9 @@ from boto3.dynamodb.conditions import Attr
 class DBUtils (object):
 
     def __init__(self):
-        self.dynamoDb = boto3.resource('dynamodb')
-        self.client = boto3.client('dynamodb')
+        self.dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
+
+        self.client = boto3.client('dynamodb', region_name='us-east-1')
 
 
     def putTransaction (self, items, table):

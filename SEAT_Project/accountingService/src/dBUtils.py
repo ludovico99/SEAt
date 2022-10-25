@@ -146,10 +146,9 @@ class DBUtils (object):
                 response = dynamoDbTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
                 data.extend(response['Items']) 
         except Exception as e:
-            #print(repr(e))
-            #return None  
-            return None,repr(e)
+            print(repr(e))
+            return None  
             
-        return data,[]
+        return data
 
     

@@ -1,6 +1,8 @@
-flask
+numpy
 grpcio
 grpcio-tools
+pika
+boto3
 geopy
 haversine
 certifi

@@ -319,7 +319,7 @@ def login():
             if len(sessione) == 0:
                 flash("login fallito, riprovare con altre credenziali")
                 return redirect('/login')
-            flash(sessione)#aggiunta
+            #flash(sessione)#aggiunta
                                                             #0: username; 1: tipoUtente; 2: email
             session['username'] = sessione['username']
             session['tipoUtente'] = sessione['tipoUtente']

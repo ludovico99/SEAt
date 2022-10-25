@@ -128,8 +128,8 @@ class AccountingGateway():
             sessione = self.stubAccounting.login(grpc_pb2.loginRequest(username=username, password=password))
 
             mySession['username'] = sessione.dict[0].value
-            #mySession['tipoUtente'] = sessione.dict[1].value
-            #mySession['email'] = sessione.dict[2].value
+            mySession['tipoUtente'] = sessione.dict[1].value
+            mySession['email'] = sessione.dict[2].value
 
             if sessione.dict[1].value == "True":
                 
