@@ -14,8 +14,9 @@ import datetime
 class ReservationGateway():
 
     def __init__(self):
-      self.reservationChannel = grpc.insecure_channel("{}:50051".format("localhost"))
-      self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
+        # self.reservationChannel = grpc.insecure_channel("{}:50051".format("localhost"))
+        self.reservationChannel = grpc.insecure_channel("{}:50051".format("reservation"))
+        self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
 
     def getSuggestions (self,details):
 

@@ -13,7 +13,7 @@ class QuotesServicer(grpc_pb2_grpc.QuoteServicer):
     
     def __init__(self):
         self.errorMsg = ""
-        self.iPAddress = "localhost"  
+        # self.iPAddress = "localhost"  
 
         self.db = DBUtils()
         self.logic = QuoteLogic()

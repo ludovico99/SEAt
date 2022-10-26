@@ -201,7 +201,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
     def establishConnectionEmail (self):
         try :
             self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -227,7 +227,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
     def establishConnectionSAGA (self):
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelSAGA = self.connectionSAGA.channel()
 

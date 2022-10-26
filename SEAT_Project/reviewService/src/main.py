@@ -117,7 +117,7 @@ class ReviewServicer(grpc_pb2_grpc.ReviewServicer):
         city = request.city
         
         # prendo tutti i lidi della città richiesta
-        accountingChannel = grpc.insecure_channel("localhost:50052")
+        accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
         list = stubAccounting.getAllBeachClubInCity(grpc_pb2.cityRequest(city=city))
         if len(list.usernameBeachClub) == 0:

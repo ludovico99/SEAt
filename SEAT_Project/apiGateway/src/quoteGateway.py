@@ -6,8 +6,9 @@ from proto import grpc_pb2_grpc
 class QuoteGateway():
 
     def __init__(self):
-       self.quoteChannel = grpc.insecure_channel("{}:50053".format("localhost"))
-       self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel)
+    #    self.quoteChannel = grpc.insecure_channel("{}:50053".format("localhost"))
+        self.quoteChannel = grpc.insecure_channel("{}:50053".format("quote"))
+        self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel)
 
     def modifyPrice(self,priceOmbrellone, priceSdraio, priceLettino, priceSedia, incrPrimeFile, incrAltaStagione, incrBassaStagione, incrMediaStagione, username):
         

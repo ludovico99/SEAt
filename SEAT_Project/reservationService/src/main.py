@@ -14,7 +14,7 @@ import geopy.geocoders
 from decimal import Decimal
 from dBUtils import DBUtils
 from reservationLogic import ReservationLogic
-
+import boto3
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
 
@@ -22,7 +22,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     
     def __init__(self):
         
-        self.ipAddr = "localhost"
+        # self.ipAddr = "localhost"
         self.db = DBUtils()
         self.logic = ReservationLogic()
 
@@ -30,10 +30,14 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         self.connectionSAGA = self.channelSAGA = None
         self.corr_id = self.response = None
       
-        accountingChannel = grpc.insecure_channel("{}:50052".format(self.ipAddr))
+        accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
         
         self.establishConnectionSAGA()
+        
+        # serve per la manual reservation
+        dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
+        self.prenotazione = dynamoDb.Table('prenotazione')
 
     def getReservedSeats(self, request, context):
         """ get the reserved seats in the specified date
@@ -120,7 +124,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
             # 1. calcolo i preventivi di tutti i lidi
 
-            quoteChannel = grpc.insecure_channel("{}:50053".format(self.ipAddr))
+            quoteChannel = grpc.insecure_channel("{}:50053".format("quote"))
             stubQuote = grpc_pb2_grpc.QuoteStub(quoteChannel)
             response = stubQuote.computeQuotes(grpc_pb2.quoteForm(
                 numRow=proposalRequest.numRow, 
@@ -147,7 +151,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             print("OFFERTE COMPATIBILI:")
             print (offerte_compatibili)
 
-            reviewChannel = grpc.insecure_channel("{}:50054".format(self.ipAddr))
+            reviewChannel = grpc.insecure_channel("{}:50054".format("review"))
             stubReview = grpc_pb2_grpc.ReviewStub(reviewChannel)
 
             # 3. calcola le coordinate della locazione richiesta dall'utente
@@ -525,7 +529,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
         except Exception as e:
             print(repr(e))
-            return grpc_pb2.response(operationResult = False, errorMessage = "Exception has occurred in manual reservation")
+            # return grpc_pb2.response(operationResult = False, errorMessage = "Exception has occurred in manual reservation")
+            return grpc_pb2.response(operationResult = False, errorMessage = repr(e))
 
         return grpc_pb2.response(operationResult = True, errorMessage = "Manual reservation has succeded") 
         
@@ -534,7 +539,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     def establishConnectionEmail (self):
         try :
             self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -561,7 +566,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     def establishConnectionSAGA (self):
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelSAGA = self.connectionSAGA.channel()
 

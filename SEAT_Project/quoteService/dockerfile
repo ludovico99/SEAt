@@ -6,7 +6,5 @@ RUN apk add --no-cache aws-cli
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 EXPOSE 50053
-#COPY src accountingService
 COPY credentials /root/.aws/
-# WORKDIR /accountingService
 CMD ["python", "quoteService/main.py"]

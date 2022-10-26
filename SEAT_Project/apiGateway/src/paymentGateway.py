@@ -6,7 +6,8 @@ from proto import grpc_pb2_grpc
 class PaymentGateway():
 
     def __init__(self):
-        self.paymentChannel = grpc.insecure_channel("{}:50055".format("localhost"))
+        # self.paymentChannel = grpc.insecure_channel("{}:50055".format("localhost"))
+        self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
         self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel)
 
 

@@ -7,7 +7,8 @@ import datetime
 class ReviewGateway():
 
     def __init__(self):
-        self.reviewChannel = grpc.insecure_channel("{}:50054".format("localhost"))
+        # self.reviewChannel = grpc.insecure_channel("{}:50054".format("localhost"))
+        self.reviewChannel = grpc.insecure_channel("{}:50054".format("review"))
         self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel)
 
     def getReviews(self,lidoID):

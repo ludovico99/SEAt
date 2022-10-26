@@ -40,7 +40,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq:5672'))
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelSAGA = self.connectionSAGA.channel()
 
@@ -318,7 +318,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                 if response == False:
                     return False, msg
                     
-                paymentChannel = grpc.insecure_channel("{}:50055".format("localhost"))
+                paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
                 stubPayment = grpc_pb2_grpc.PaymentStub(paymentChannel)   
 
                 response = stubPayment.insertCreditCard(grpc_pb2.creditDetails(username = registrationRequest.username,
