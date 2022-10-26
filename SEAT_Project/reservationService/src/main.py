@@ -538,8 +538,16 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
              
     def establishConnectionEmail (self):
         try :
-            self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            # self.connectionEmail = pika.BlockingConnection(
+            # pika.ConnectionParameters(host='rabbitmq'))
+
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -560,13 +568,21 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         except Exception as e:
             print(repr(e))
             self.connectionEmail.close()
-            return False,"Error in establishing connections and queues"
+            return False, "Error in establishing connections and queues"
         return True,"Connection and queues are correctly established "
 
     def establishConnectionSAGA (self):
         try :
-            self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            # self.connectionSAGA = pika.BlockingConnection(
+            # pika.ConnectionParameters(host='rabbitmq'))
+
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
 
             self.channelSAGA = self.connectionSAGA.channel()
 
@@ -596,7 +612,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             print(repr(e))
             if self.connectionSAGA != None and self.connectionSAGA.is_open():
                 self.connectionSAGA.close()
-            return False,"Error in establishing connections and queues"
+            return False, repr(e)#"Error in establishing connections and queues"
         return True,"Connection and queues are correctly established "
     
         

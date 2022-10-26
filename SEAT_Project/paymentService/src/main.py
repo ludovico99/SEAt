@@ -5,6 +5,7 @@ import pika
 import uuid
 import sqlite3
 import threading
+import socket
 
 
 from proto import grpc_pb2
@@ -200,8 +201,16 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
     def establishConnectionEmail (self):
         try :
-            self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            # self.connectionEmail = pika.BlockingConnection(
+            # pika.ConnectionParameters(host='rabbitmq'))
+
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -226,8 +235,16 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
     def establishConnectionSAGA (self):
         try :
-            self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            # self.connectionSAGA = pika.BlockingConnection(
+            # pika.ConnectionParameters(host='rabbitmq'))
+
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
 
             self.channelSAGA = self.connectionSAGA.channel()
 

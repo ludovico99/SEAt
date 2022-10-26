@@ -4,7 +4,7 @@ import time
 import grpc
 import uuid
 import pika
-
+import socket
 from dBUtils import DBUtils
 
 from proto import grpc_pb2
@@ -585,9 +585,16 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             BOOL: return TRUE if the connection to RabbitMQ server has succeded
         """
         try :
-            self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
-
+            # self.connection = pika.BlockingConnection(
+            # pika.ConnectionParameters(host='rabbitmq:5672'))
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
+            
             self.channel = self.connection.channel()
 
             #CODA PER TUTTE LE RICHIESTE

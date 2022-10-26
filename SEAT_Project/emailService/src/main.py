@@ -1,14 +1,20 @@
 import pika
-
+import time
+import socket
 
 class EmailService (object):
 
     def __init__(self):
         try :
             #self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-            self.connection = pika.BlockingConnection(
-                pika.ConnectionParameters(host='rabbitmq'))
-
+            self.connection = None
+            while self.connection is None:
+                try:
+                    self.connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq:5672'))
+                except socket.gaierror as error:
+                    time.sleep(1)
+                
             self.channel = self.connection.channel()
 
             #CODA PER LE RICHIESTE PROVENIENTI DALL'ACCOUNT
@@ -21,6 +27,7 @@ class EmailService (object):
                 queue=self.requestQueue,
                 on_message_callback=self.onRequest,
                 auto_ack=True)
+            # self.channel.start_consuming()
 
         except Exception as e:
             print(repr(e))
@@ -42,7 +49,7 @@ class EmailService (object):
                 self.channel.basic_publish(exchange='topic_logs', routing_key="Payment.response", body=message) 
 
         
-
+print("Starting EMAIL SERVICE. [x] BEFORE INIT")
 emailService = EmailService()
 print("Starting EMAIL SERVICE. [x] Awaiting email requests")
 emailService.channel.start_consuming()
