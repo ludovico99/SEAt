@@ -71,24 +71,26 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             BOOL: return TRUE if the connection to RabbitMQ server has succeded
         """
         try :
-            #while self.connection is None:
+            #  while self.connection is None:
                 try:
                     amqp_url = os.environ['AMQP_URL']
 
                      # Actually connect
                     parameters = pika.URLParameters(amqp_url)
-                    self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
+                    self.connection = pika.BlockingConnection(parameters)
+                    #self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
 
                     # Main loop.  This will run forever, or until we get killed.
-                    self.connection.ioloop.start()
-                    
+                    #self.connection.ioloop.start()
+                    self.on_open()
                 # except socket.gaierror as error:
+                #     print(repr(error))
                 #     time.sleep(1)
 
                 except KeyboardInterrupt:
                     if (self.connection != None):
                         self.connection.close()
-                        self.connection.ioloop.start()
+                        #self.connection.ioloop.start()
        
         except Exception as e:
             print(repr(e))
@@ -97,34 +99,60 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         return True
 
     def on_open (self):
-        self.channel = self.connection.channel(self.on_channel_open)
+        try:
+            print ("CONNECTION OPEN")
+            self.channel = self.connection.channel()
+            self.on_channel_open()
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
     
     def on_channel_open (self):
-        self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic',callback = partial (self.on_exchange,self.channel))
+        try:
+            print("CHANNEL OPEN")
+            self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
+            self.on_exchange()
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
 
-    def on_exchange (self,channel):
-        print('Have exchange')
+    def on_exchange (self):
+        try:
+            print('Have exchange')
 
-         #CODA PER TUTTE LE RICHIESTE
-        result =self.channel.queue_declare(queue='emailQueue')
-        self.requestQueue = result.method.queue
+            #CODA PER TUTTE LE RICHIESTE
+            result =self.channel.queue_declare(queue='emailQueue')
+            self.requestQueue = result.method.queue
 
-        #CODA PER LE RISPOSTE
-        result =self.channel.queue_declare(queue='responseQueue:Accounting')
-        self.responseQueue = result.method.queue
+            #CODA PER LE RISPOSTE
+            result =self.channel.queue_declare(queue='responseQueue:Accounting')
+            self.responseQueue = result.method.queue
 
-        #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-        self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*",callback= partial(self.on_bind,channel))
+            #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
+            self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*")
+            self.on_bind()
 
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
     
-    def on_bind(self,channel):
-        #COSA FARE ALLA RISPOSTA???
-        self.channel.basic_consume(
-                queue=self.responseQueue,
-                on_message_callback=self.onResponse,
-                auto_ack=True)
+    def on_bind(self):
 
-        self.channel.start_consuming()
+        try:
+            self.channel.basic_consume(
+                    queue=self.responseQueue,
+                    on_message_callback=self.onResponse,
+                    auto_ack=True)
+
+            print("Awaiting email responses")
+           
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
 
     def establishConnectionSAGA (self):
         """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
@@ -135,7 +163,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """
         try :
             self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            pika.ConnectionParameters(host="amqp://guest:guest@localhost:5672/"))
 
             self.channelSAGA = self.connectionSAGA.channel()
 
@@ -682,7 +710,6 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             body (string): body of the message
         """
 
-
         print("RESPONSE: %r:%r" % (method.routing_key, body))
         if self.connection != None and self.connection.is_open:
             self.connection.close()
@@ -714,6 +741,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                 ),
                 body=request)
             print("Send operation has succeded")
+
             self.connection.process_data_events(time_limit=None)
         except Exception as e:
             print(repr(e))

@@ -4,9 +4,17 @@ services:
   rabbitmq:
     container_name: rabbitmq
     image: 'rabbitmq:3.6-management-alpine'
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+        - /etc/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    # environment:
+    #   RABBITMQ_DEFAULT_USER: "guest"
+    #   RABBITMQ_DEFAULT_PASS: "guest"
     ports:
     - "5672:5672"
     - "15672:15672"
+
     
   front-end:
     build: ./apiGateway
@@ -16,6 +24,7 @@ services:
       FLASK_ENV: development
     depends_on:
       - accounting
+    
 
     # networks:
     #   static-network:
@@ -28,7 +37,7 @@ services:
     #   - ~/.aws/credentials:$HOME/.aws/credentials:ro
     #   - ~/.aws/config:$HOME/.aws/config:ro
     environment:
-      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=15'
+      AMQP_URL: 'amqp://guest:guest@rabbitmq:5672?connection_attempts=5&retry_delay=15'
     ports:
       - "50052:50052"
     depends_on:
@@ -37,12 +46,15 @@ services:
   email:
     build: ./emailService
     environment:
-      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=15'
+      AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=15'
     volumes:
      - ./emailService/src:/home/emailService
     depends_on:
       - accounting
       - rabbitmq
+   
+
+
 
   # payment: 
   #   build: ./paymentService

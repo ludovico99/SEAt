@@ -34,6 +34,12 @@ sudo docker container exec -it 9cc0c687e8fd  ls -a /root/.aws/credentials
 
 sudo docker run -it <tag>
 
+COMANDI RABBITMQ:
+sudo systemctl status rabbitmq-server
+sudo systemctl stop rabbitmq-server
+sudo systemctl start rabbitmq-server
+
+
 
 
 PASSI PER COMPILARE:
