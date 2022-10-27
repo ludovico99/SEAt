@@ -17,10 +17,13 @@ from reservationLogic import ReservationLogic
 import boto3
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
+import socket
+import os
 
 class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     
     def __init__(self):
+
         
         # self.ipAddr = "localhost"
         self.db = DBUtils()
@@ -33,8 +36,9 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
         
+        self.amqp_url = os.environ['AMQP_URL']
         self.establishConnectionSAGA()
-        
+
         # serve per la manual reservation
         dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
         self.prenotazione = dynamoDb.Table('prenotazione')
@@ -538,16 +542,9 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
              
     def establishConnectionEmail (self):
         try :
-            # self.connectionEmail = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq'))
+            self.connectionEmail = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq'))
 
-            self.connection = None
-            while self.connection is None:
-                try:
-                    self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq:5672'))
-                except socket.gaierror as error:
-                    time.sleep(1)
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -573,16 +570,12 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
     def establishConnectionSAGA (self):
         try :
-            # self.connectionSAGA = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq'))
+            self.connectionSAGA = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq'))
 
-            self.connection = None
-            while self.connection is None:
-                try:
-                    self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq:5672'))
-                except socket.gaierror as error:
-                    time.sleep(1)
+            # parameters = pika.BlockingConnection()
+            # self.connectionSAGA = connection = pika.SelectConnection(parameters, on_open_callback=on_open)
+
 
             self.channelSAGA = self.connectionSAGA.channel()
 

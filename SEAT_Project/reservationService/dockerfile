@@ -8,5 +8,6 @@ RUN pip install -r requirements.txt
 EXPOSE 50051
 #COPY src accountingService
 COPY credentials /root/.aws/
+ENV PYTHONUNBUFFERED=1
 # WORKDIR /accountingService
 CMD ["python", "reservationService/main.py"]

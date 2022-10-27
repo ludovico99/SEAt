@@ -14,6 +14,7 @@ from proto import grpc_pb2_grpc
 class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
     
     def __init__(self):
+
     
         self.connectionEmail = None
         self.connectionSAGA = None
@@ -38,6 +39,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
     
 
     def onlinePaymentSAGA(self, ch, method, properties, body):
+        
         print("\n ONLINE PAYMENT SAGA")
         try :
             request = body.decode("utf-8").split(':')
@@ -51,7 +53,6 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             budgetDifference=float(request[6])
             idCard=int(request[7])
         
-
             print("[Il server ha ricevuto]\nUsername:{}, lido:{}, costo:{}, distanza dal luogo richiesto: {}, differenza di prezzo dal massimo richiesto: {}".format (
             username, lido_id,costo,distance,budgetDifference,))
                     
@@ -76,7 +77,6 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.execute("UPDATE payment SET Credito = ?  WHERE username = ? AND id = ?", (credito - int(costo), username, idCard,))
                 self.sqlConn.execute("UPDATE payment SET Credito = ?  WHERE username = ?", (tupleListLido[0][4] + int(costo),lido_id, ))
                 self.sqlConn.commit()
-
                 print("Payment operation has succeded")
                 request = body
                 
@@ -201,16 +201,8 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
     def establishConnectionEmail (self):
         try :
-            # self.connectionEmail = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq'))
-
-            self.connection = None
-            while self.connection is None:
-                try:
-                    self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq:5672'))
-                except socket.gaierror as error:
-                    time.sleep(1)
+            self.connectionEmail = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq'))
 
             self.channelEmail = self.connectionEmail.channel()
 
@@ -235,16 +227,9 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
     def establishConnectionSAGA (self):
         try :
-            # self.connectionSAGA = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq'))
+            self.connectionSAGA = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq'))
 
-            self.connection = None
-            while self.connection is None:
-                try:
-                    self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq:5672'))
-                except socket.gaierror as error:
-                    time.sleep(1)
 
             self.channelSAGA = self.connectionSAGA.channel()
 

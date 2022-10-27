@@ -3,7 +3,7 @@ services:
 
   rabbitmq:
     container_name: rabbitmq
-    image: rabbitmq:3-management
+    image: 'rabbitmq:3.6-management-alpine'
     ports:
     - "5672:5672"
     - "15672:15672"
@@ -27,6 +27,8 @@ services:
      - ./accountingService/src:/home/accountingService
     #   - ~/.aws/credentials:$HOME/.aws/credentials:ro
     #   - ~/.aws/config:$HOME/.aws/config:ro
+    environment:
+      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=15'
     ports:
       - "50052:50052"
     depends_on:
@@ -34,46 +36,56 @@ services:
 
   email:
     build: ./emailService
+    environment:
+      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=15'
     volumes:
      - ./emailService/src:/home/emailService
     depends_on:
       - accounting
+      - rabbitmq
 
-  payment: 
-    build: ./paymentService
-    volumes:
-      - ./paymentService/src:/home/paymentService
-    ports:
-      - "50055:50055"
-    depends_on:
-      - accounting
+  # payment: 
+  #   build: ./paymentService
+  #   environment:
+  #     AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
+  #   volumes:
+  #     - ./paymentService/src:/home/paymentService
+  #   ports:
+  #     - "50055:50055"
+  #   depends_on:
+  #     - accounting
+  #     - rabbitmq
 
-  quote: 
-    build: ./quoteService
-    volumes:
-      - ./quoteService/src:/home/quoteService
-    ports:
-      - "50053:50053"
-    depends_on:
-      - accounting
+  # quote: 
+  #   build: ./quoteService
+  #   volumes:
+  #     - ./quoteService/src:/home/quoteService
+  #   ports:
+  #     - "50053:50053"
+  #   depends_on:
+  #     - accounting
 
-  reservation: 
-    build: ./reservationService
-    volumes:
-      - ./reservationService/src:/home/reservationService
-    ports:
-      - "50051:50051"
-    depends_on:
-      - accounting
 
-  review: 
-    build: ./reviewService
-    volumes:
-      - ./reviewService/src:/home/reviewService
-    ports:
-      - "50054:50054"
-    depends_on:
-      - accounting
+  # reservation: 
+  #   build: ./reservationService
+  #   environment:
+  #     AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
+  #   volumes:
+  #     - ./reservationService/src:/home/reservationService
+  #   ports:
+  #     - "50051:50051"
+  #   depends_on:
+  #     - accounting
+  #     - rabbitmq
+
+  # review: 
+  #   build: ./reviewService
+  #   volumes:
+  #     - ./reviewService/src:/home/reviewService
+  #   ports:
+  #     - "50054:50054"
+  #   depends_on:
+  #     - accounting
 
     # networks:
     #   static-network:

@@ -5,5 +5,5 @@ WORKDIR /home
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 EXPOSE 50055
-COPY credentials /root/.aws/
+ENV PYTHONUNBUFFERED=1
 CMD ["python", "paymentService/main.py"]

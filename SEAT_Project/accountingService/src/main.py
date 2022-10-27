@@ -6,6 +6,8 @@ import uuid
 import pika
 import socket
 from dBUtils import DBUtils
+import os
+from functools import partial
 
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -19,7 +21,6 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         self.errorMsg = ""
         self.connection = None
         self.channel = None
-        self.corr_id = None
         self.requestQueue = None
         self.responseQueue = None
 
@@ -27,9 +28,103 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         self.channelSAGA = None
 
         self.db = DBUtils()
-    
-        self.establishConnectionSAGA()
 
+        # while self.connection is None:
+        #         try:
+        #             amqp_url = os.environ['AMQP_URL']
+
+        #              # Actually connect
+        #             parameters = pika.URLParameters(amqp_url)
+        #             self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
+
+        #             # Main loop.  This will run forever, or until we get killed.
+        #             self.connection.ioloop.start()
+                    
+        #         except socket.gaierror as error:
+        #             time.sleep(1)
+
+        #         except KeyboardInterrupt:
+        #             if (self.connection != None):
+        #                 self.connection.close()
+        # self.establishConnectionSAGA()
+
+    # def on_open(self):
+    #     self.channelSAGA = self.connectionSAGA.channel(self.on_channel_open)
+
+    # def on_channel_open (self):
+    #     try:
+    #     # Dichiarazione per le code delle richieste e delle risposte
+    #         self.channelSAGA.queue_declare(queue="Account_request")
+    #         self.channelSAGA.queue_declare(queue="Account_response")
+
+    #         self.channelSAGA.queue_declare(queue="Payment_request")
+    #         self.channelSAGA.queue_declare(queue="Payment_response")
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if self.connectionSAGA
+
+    def establishConnection (self):
+        """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
+            for sending the email
+
+        Returns:
+            BOOL: return TRUE if the connection to RabbitMQ server has succeded
+        """
+        try :
+            #while self.connection is None:
+                try:
+                    amqp_url = os.environ['AMQP_URL']
+
+                     # Actually connect
+                    parameters = pika.URLParameters(amqp_url)
+                    self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
+
+                    # Main loop.  This will run forever, or until we get killed.
+                    self.connection.ioloop.start()
+                    
+                # except socket.gaierror as error:
+                #     time.sleep(1)
+
+                except KeyboardInterrupt:
+                    if (self.connection != None):
+                        self.connection.close()
+                        self.connection.ioloop.start()
+       
+        except Exception as e:
+            print(repr(e))
+            self.errorMsg = "Error in establishing connections and queues"
+            return False
+        return True
+
+    def on_open (self):
+        self.channel = self.connection.channel(self.on_channel_open)
+    
+    def on_channel_open (self):
+        self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic',callback = partial (self.on_exchange,self.channel))
+
+    def on_exchange (self,channel):
+        print('Have exchange')
+
+         #CODA PER TUTTE LE RICHIESTE
+        result =self.channel.queue_declare(queue='emailQueue')
+        self.requestQueue = result.method.queue
+
+        #CODA PER LE RISPOSTE
+        result =self.channel.queue_declare(queue='responseQueue:Accounting')
+        self.responseQueue = result.method.queue
+
+        #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
+        self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*",callback= partial(self.on_bind,channel))
+
+    
+    def on_bind(self,channel):
+        #COSA FARE ALLA RISPOSTA???
+        self.channel.basic_consume(
+                queue=self.responseQueue,
+                on_message_callback=self.onResponse,
+                auto_ack=True)
+
+        self.channel.start_consuming()
 
     def establishConnectionSAGA (self):
         """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
@@ -506,7 +601,6 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
     
             request = "{}:{}".format (username,deleteReq.admin)
             print("SENDING A DELETE REQUEST")
-            self.corr_id = str(uuid.uuid4())
           
             self.channelSAGA.basic_publish(
                 exchange='', 
@@ -577,50 +671,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
       
         return response
     
-    def establishConnection (self):
-        """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
-            for sending the email
-
-        Returns:
-            BOOL: return TRUE if the connection to RabbitMQ server has succeded
-        """
-        try :
-            # self.connection = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq:5672'))
-            self.connection = None
-            while self.connection is None:
-                try:
-                    self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq:5672'))
-                except socket.gaierror as error:
-                    time.sleep(1)
-            
-            self.channel = self.connection.channel()
-
-            #CODA PER TUTTE LE RICHIESTE
-            result =self.channel.queue_declare(queue='emailQueue')
-            self.requestQueue = result.method.queue
-
-            #CODA PER LE RISPOSTE
-            result =self.channel.queue_declare(queue='responseQueue:Accounting')
-            self.responseQueue = result.method.queue
-
-            #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-            self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*")
-
-            #COSA FARE ALLA RISPOSTA???
-            self.channel.basic_consume(
-                queue=self.responseQueue,
-                on_message_callback=self.onResponse,
-                auto_ack=True)
-
-        except Exception as e:
-            print(repr(e))
-            self.errorMsg = "Error in establishing connections and queues"
-            return False
-        return True
-
+    
     def onResponse (self,ch,method,properties,body):
         """ Callback for the response message from the email service
 
@@ -655,13 +706,11 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             request = "{}:{}#Accounting".format (username,email)
             #INVIO DEL MESSAGGIO DI RICHIESTA
             print("SENDING AN EMAIL TO {}".format(request))
-            self.corr_id = str(uuid.uuid4())
             self.channel.basic_publish(
                 exchange='',
                 routing_key='emailQueue',
                 properties=pika.BasicProperties(
                     reply_to=self.responseQueue,
-                    correlation_id=self.corr_id,
                 ),
                 body=request)
             print("Send operation has succeded")
@@ -736,7 +785,7 @@ def grpc_server (service):
 
 def sagaQueueConsumer(service):
     print(" [x] Awaiting SAGA requests")
-    service.channelSAGA.start_consuming()
+    #service.channelSAGA.start_consuming()
     
 service = AccountingServicer()
 x = threading.Thread(target=grpc_server, args=(service,))
