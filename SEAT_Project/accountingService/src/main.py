@@ -18,7 +18,6 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
     def __init__(self):
         """Costructor for Accounting service class
         """
-        self.errorMsg = ""
         self.connection = None
         self.channel = None
         self.requestQueue = None
@@ -29,39 +28,43 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
 
         self.db = DBUtils()
 
-        # while self.connection is None:
-        #         try:
-        #             amqp_url = os.environ['AMQP_URL']
 
-        #              # Actually connect
-        #             parameters = pika.URLParameters(amqp_url)
-        #             self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
+    def on_open_SAGA(self):
+        try:
+            print ("CONNECTION OPEN FOR SAGA")
+            self.channelSAGA = self.connectionSAGA.channel()
+            return self.on_channel_open_SAGA()
+        except Exception as e:
+            print(repr(e))
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
 
-        #             # Main loop.  This will run forever, or until we get killed.
-        #             self.connection.ioloop.start()
-                    
-        #         except socket.gaierror as error:
-        #             time.sleep(1)
+    def on_channel_open_SAGA (self):
+        try:
+            print("CHANNEL CORRECTLY CREATED")
+        # Dichiarazione per le code delle richieste e delle risposte
+            self.channelSAGA.queue_declare(queue="Account_request")
+            self.channelSAGA.queue_declare(queue="Account_response")
 
-        #         except KeyboardInterrupt:
-        #             if (self.connection != None):
-        #                 self.connection.close()
-        # self.establishConnectionSAGA()
+            self.channelSAGA.queue_declare(queue="Payment_request")
+            self.channelSAGA.queue_declare(queue="Payment_response")
 
-    # def on_open(self):
-    #     self.channelSAGA = self.connectionSAGA.channel(self.on_channel_open)
+            self.channelSAGA.basic_consume(
+                    queue="Account_request",
+                    on_message_callback=self.onDeleteRequest,
+                    auto_ack=True)
 
-    # def on_channel_open (self):
-    #     try:
-    #     # Dichiarazione per le code delle richieste e delle risposte
-    #         self.channelSAGA.queue_declare(queue="Account_request")
-    #         self.channelSAGA.queue_declare(queue="Account_response")
-
-    #         self.channelSAGA.queue_declare(queue="Payment_request")
-    #         self.channelSAGA.queue_declare(queue="Payment_response")
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if self.connectionSAGA
+            self.channelSAGA.basic_consume(
+                    queue="Account_response",
+                    on_message_callback=self.onDeleteResponse,
+                    auto_ack=True)
+            return True
+        except Exception as e:
+            print(repr(e))
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
 
     def establishConnection (self):
         """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
@@ -70,53 +73,48 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         Returns:
             BOOL: return TRUE if the connection to RabbitMQ server has succeded
         """
-        try :
-            #  while self.connection is None:
-                try:
-                    amqp_url = os.environ['AMQP_URL']
 
-                     # Actually connect
-                    parameters = pika.URLParameters(amqp_url)
-                    self.connection = pika.BlockingConnection(parameters)
-                    #self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
 
-                    # Main loop.  This will run forever, or until we get killed.
-                    #self.connection.ioloop.start()
-                    self.on_open()
-                # except socket.gaierror as error:
-                #     print(repr(error))
-                #     time.sleep(1)
+        try:
+            amqp_url = os.environ['AMQP_URL']
 
-                except KeyboardInterrupt:
-                    if (self.connection != None):
-                        self.connection.close()
-                        #self.connection.ioloop.start()
+            parameters = pika.URLParameters(amqp_url)
+            self.connection = pika.BlockingConnection(parameters)
+            
+            return self.on_open(),"Connection and queues are correctly established"
+        
+        except KeyboardInterrupt:
+            if (self.connection != None):
+                self.connection.close()
        
         except Exception as e:
             print(repr(e))
-            self.errorMsg = "Error in establishing connections and queues"
-            return False
-        return True
+            return False,"Error in establishing connections and queues"
+
 
     def on_open (self):
         try:
             print ("CONNECTION OPEN")
             self.channel = self.connection.channel()
-            self.on_channel_open()
+
+            return self.on_channel_open()
+
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
     
     def on_channel_open (self):
         try:
             print("CHANNEL OPEN")
             self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            self.on_exchange()
+            return self.on_exchange()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
 
     def on_exchange (self):
         try:
@@ -132,12 +130,13 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
 
             #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
             self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*")
-            self.on_bind()
+            return self.on_bind()
 
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
     
     def on_bind(self):
 
@@ -148,11 +147,12 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                     auto_ack=True)
 
             print("Awaiting email responses")
-           
+            return True
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
 
     def establishConnectionSAGA (self):
         """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
@@ -161,45 +161,28 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         Returns:
             BOOL,String: Return a Boolean in order to discriminate the success or failure of the method and an error message
         """
-        try :
-            self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host="amqp://guest:guest@localhost:5672/"))
+      
+        try:
+            amqp_url = os.environ['AMQP_URL']
 
-            self.channelSAGA = self.connectionSAGA.channel()
+                # Actually connect
+            parameters = pika.URLParameters(amqp_url)
+            self.connectionSAGA= pika.BlockingConnection(parameters)
 
-            # Dichiarazione per le code delle richieste e delle risposte
-            self.channelSAGA.queue_declare(queue="Account_request")
-            self.channelSAGA.queue_declare(queue="Account_response")
+            return self.on_open_SAGA(),"Connection and queues are correctly established"
 
-            self.channelSAGA.queue_declare(queue="Payment_request")
-            self.channelSAGA.queue_declare(queue="Payment_response")
-
-            # #Exchange di ricezione e binding
-            # self.channelSAGA.exchange_declare(exchange='topic_logs_2', exchange_type='topic')
-
-            # self.channelSAGA.queue_bind(exchange='topic_logs_2', queue='Account_request', routing_key="Account.request.*")
-            # self.channelSAGA.queue_bind(exchange='topic_logs_2', queue='Account_response', routing_key="Account.response.*")
-
-            # #Exchange di invio
-            # self.channelSAGA.exchange_declare(exchange='topic_logs_1', exchange_type='topic')
-
-            self.channelSAGA.basic_consume(
-                    queue="Account_request",
-                    on_message_callback=self.onDeleteRequest,
-                    auto_ack=True)
-
-            self.channelSAGA.basic_consume(
-                    queue="Account_response",
-                    on_message_callback=self.onDeleteResponse,
-                    auto_ack=True)
-
-
+        except KeyboardInterrupt:
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
         except Exception as e:
             print(repr(e))
-            if self.connectionSAGA != None:
+
+            if (self.connectionSAGA != None):
                 self.connectionSAGA.close()
-            return False,"Error in establishing connections and queues"
-        return True,"Connection and queues are correctly established "
+
+            return False,"Error in establishing connection"
+
+            
 
     def onDeleteResponse (self,ch,method,properties,body):
         """ Callback function for messages that tell if the delete operation has succeded or not
@@ -624,23 +607,25 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         username = deleteReq.username
         try:
 
-            self.establishConnectionSAGA()
+            res, msg = self.establishConnectionSAGA()
             # pubblica un messaggio  per triggerare la delete
-    
-            request = "{}:{}".format (username,deleteReq.admin)
-            print("SENDING A DELETE REQUEST")
-          
-            self.channelSAGA.basic_publish(
-                exchange='', 
-                routing_key= "Payment_request", 
-                properties=pika.BasicProperties(
-                        reply_to= "Account_request",
-                    ),
-                body=request
-            ),
+            if res == True and self.channelSAGA != None:
+                request = "{}:{}".format (username,deleteReq.admin)
+                print("SENDING A DELETE REQUEST")
+            
+                self.channelSAGA.basic_publish(
+                    exchange='', 
+                    routing_key= "Payment_request", 
+                    properties=pika.BasicProperties(
+                            reply_to= "Account_request",
+                        ),
+                    body=request
+                ),
 
-            self.connectionSAGA.process_data_events(time_limit=None)  
-            print("END")
+                self.connectionSAGA.process_data_events(time_limit=None)  
+                print("END")
+            else : return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
+
         except Exception as e:
             print(repr(e))
             return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
@@ -798,31 +783,30 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             )
         return response
 
-def grpc_server (service):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    grpc_pb2_grpc.add_AccountingServicer_to_server(service, server)
-    print('Starting ACCOUNTING SERVICE. Listening on port 50052.')
-    server.add_insecure_port('[::]:50052')
-    #server.add_insecure_port('172.24.0.3:50052')
-    server.start()
-    try:
-        while True:
-            time.sleep(86400)
-    except KeyboardInterrupt:
-        server.stop(0)
-
-def sagaQueueConsumer(service):
-    print(" [x] Awaiting SAGA requests")
-    #service.channelSAGA.start_consuming()
-    
 service = AccountingServicer()
-x = threading.Thread(target=grpc_server, args=(service,))
-x.start()
+server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+grpc_pb2_grpc.add_AccountingServicer_to_server(service, server)
+print('Starting ACCOUNTING SERVICE. Listening on port 50052.')
+server.add_insecure_port('[::]:50052')
+server.start()
+try:
+    while True:
+        time.sleep(86400)
+except KeyboardInterrupt:
+    server.stop(0)
+
+# def sagaQueueConsumer(service):
+#     print(" [x] Awaiting SAGA requests")
+#     #service.channelSAGA.start_consuming()
+    
+# service = AccountingServicer()
+# x = threading.Thread(target=grpc_server, args=(service,))
+# x.start()
 
 
-y = threading.Thread(target=sagaQueueConsumer,args=(service,))
-y.start()
-x.join()
+# y = threading.Thread(target=sagaQueueConsumer,args=(service,))
+# y.start()
+# x.join()
 
 
 

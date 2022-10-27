@@ -1,4 +1,5 @@
 from concurrent import futures
+import os
 import time
 import grpc
 import pika
@@ -197,43 +198,99 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.close()
         return response
 
-
-
-    def establishConnectionEmail (self):
-        try :
-            self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
-
+    def on_open(self):
+        try:
+            print ("CONNECTION OPEN")
             self.channelEmail = self.connectionEmail.channel()
+            return self.on_channel_open()
+        except Exception as e:
+            print(repr(e))
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
+            return False
 
-            # Dichiarazione per le code delle richieste e delle risposte
+    def on_channel_open (self):
+        try:
+            print("CHANNEL OPEN")
+            self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
+            return self.on_exchange()
+        except Exception as e:
+            print(repr(e))
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
+            return False
+
+    def on_exchange (self):
+        try:
+            print('Have exchange')
+
+            #CODA PER LE RISPOSTE
             self.channelEmail.queue_declare(queue="emailQueue")
             self.channelEmail.queue_declare(queue='responseQueue:Payment') 
-            
-             # BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-            self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            self.channelEmail.queue_bind(exchange='topic_logs', queue='responseQueue:Payment', routing_key="Payment.*")
 
-                #COSA FARE ALLA RISPOSTA???
+            #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
+            self.channelEmail.queue_bind(exchange='topic_logs', queue='responseQueue:Payment', routing_key="Payment.*")
+            return self.on_bind()
+
+        except Exception as e:
+            print(repr(e))
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
+            return False
+
+    def on_bind(self):
+
+        try:
             self.channelEmail.basic_consume(
                 queue='responseQueue:Payment',
                 on_message_callback=self.onResponseEmail,
                 auto_ack=True)
 
+            print("Awaiting email responses")
+            return True
         except Exception as e:
             print(repr(e))
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
+            return False
+
+    def establishConnectionEmail (self):
+        try:
+            amqp_url = os.environ['AMQP_URL']
+
+            parameters = pika.URLParameters(amqp_url)
+            self.connectionEmail = pika.BlockingConnection(parameters)
+            
+            return self.on_open()
+        
+        except KeyboardInterrupt:
+            if (self.connectionEmail != None):
+                self.connectionEmail.close()
+       
+        except Exception as e:
+            print(repr(e))
+            self.errorMsg = "Error in establishing connections and queues"
             return False,"Error in establishing connections and queues"
         return True,"Connection and queues are correctly established "
-
-    def establishConnectionSAGA (self):
-        try :
-            self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+    
+            
 
 
+    def on_open_SAGA(self):
+        try:
+            print ("CONNECTION OPEN FOR SAGA")
             self.channelSAGA = self.connectionSAGA.channel()
-
-            # Dichiarazione per le code delle richieste e delle risposte
+            return self.on_channel_open_SAGA()
+        except Exception as e:
+            print(repr(e))
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
+            
+    def on_channel_open_SAGA (self):
+        try:
+            print("CHANNEL CORRECTLY CREATED")
+        # Dichiarazione per le code delle richieste e delle risposte
             self.channelSAGA.queue_declare(queue="Pay_request")
             self.channelSAGA.queue_declare(queue="Pay_response") 
         
@@ -241,24 +298,12 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             self.channelSAGA.queue_declare(queue="History_response")
 
             # Dichiarazione per le code delle richieste e delle risposte
-            self.channelSAGA.queue_declare(queue="Account_request")
-            self.channelSAGA.queue_declare(queue="Account_response")
+            # self.channelSAGA.queue_declare(queue="Account_request")
+            # self.channelSAGA.queue_declare(queue="Account_response")
 
             self.channelSAGA.queue_declare(queue="Payment_request")
-            self.channelSAGA.queue_declare(queue="Payment_response")
+            self.channelSAGA.queue_declare(queue="Payment_response") 
 
-            # #Exchange di ricezione e binding
-            # self.channelSAGA.exchange_declare(exchange='topic_logs_1', exchange_type='topic')
-
-            # self.channelSAGA.queue_bind(exchange='topic_logs_1', queue='Payment_request', routing_key="Payment.request.*")
-            # self.channelSAGA.queue_bind(exchange='topic_logs_1', queue='Payment_response', routing_key="Payment.response.*")
-
-            # #Exchange di invio
-            # self.channelSAGA.exchange_declare(exchange='topic_logs_2', exchange_type='topic')       
-                
-            self.publishRequest = "History_request"
-              
-            # quando consuma da payRequest deve eseguire il pagamento
             self.channelSAGA.basic_consume(
                     queue="Pay_request",
                     on_message_callback=self.onlinePaymentSAGA,
@@ -280,11 +325,35 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                     queue="Payment_response",
                     on_message_callback=self.onDeleteResponse,
                     auto_ack=True)
-
+            return True
         except Exception as e:
             print(repr(e))
-            return False,"Error in establishing connections and queues"
-        return True,"Connection and queues are correctly established "
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
+
+
+    def establishConnectionSAGA (self):
+        
+        try:
+            amqp_url = os.environ['AMQP_URL']
+
+            parameters = pika.URLParameters(amqp_url)
+            self.connectionSAGA = pika.BlockingConnection(parameters)
+            
+            return self.on_open_SAGA(),"Connection and queues are correctly established"  
+
+        except KeyboardInterrupt:
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+        except Exception as e:
+            print(repr(e))
+
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+
+            return False,"Error in establishing connection"
+         
 
     def onResponseEmail (self,ch,method,properties,body):
         print("RESPONSE: %r:%r" % (method.routing_key, body))
@@ -307,14 +376,9 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             self.sqlConn.commit ()
         
             request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in payment service has succeded",list)
-                            
-            # self.channelSAGA.basic_publish(exchange='topic_logs_2', routing_key="Account.request.1",
-            # properties=pika.BasicProperties(
-            #     reply_to= "Payment_response",
-            # ),
-            # body=request)
 
             print(properties.reply_to)
+
             self.channelSAGA.basic_publish(exchange='', routing_key=properties.reply_to,
             properties=pika.BasicProperties(
                 reply_to= "Payment_response",

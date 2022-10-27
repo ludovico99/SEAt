@@ -9,35 +9,22 @@ class EmailService (object):
 
     def __init__(self):
     
-            #self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.connection = None
         self.channel = None
         self.exchange = "topic_logs"
-        # while self.connection is None:
+
         try:
             amqp_url = os.environ['AMQP_URL']
 
-            # Actually connect
-            # credentials = pika.PlainCredentials(username="guest", password="guest")
             parameters = pika.URLParameters(amqp_url)
             self.connection = pika.BlockingConnection(parameters) 
-            # self.connection = pika.SelectConnection(parameters, on_open_callback=self.on_open)
-
-            # Main loop.  This will run forever, or until we get killed.
-            #self.connection.ioloop.start()
-
+    
             self.on_open ()
             
-            # self.connection = pika.BlockingConnection(
-            # pika.ConnectionParameters(host='rabbitmq:5672'))
-        # except socket.gaierror as error:
-        #     print("SONO QUI")
-        #     time.sleep(1)
 
         except KeyboardInterrupt:
             if (self.connection != None):
                 self.connection.close()
-                #self.connection.ioloop.start
                     
         except Exception as e:
             print(repr(e))
