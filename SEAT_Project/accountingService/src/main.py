@@ -4,7 +4,6 @@ import time
 import grpc
 import uuid
 import pika
-import socket
 from dBUtils import DBUtils
 import os
 from functools import partial
@@ -89,7 +88,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
        
         except Exception as e:
             print(repr(e))
-            return False,"Error in establishing connections and queues"
+        return False,"Error in establishing connections and queues"
 
 
     def on_open (self):
@@ -165,9 +164,9 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         try:
             amqp_url = os.environ['AMQP_URL']
 
-                # Actually connect
+            # Actually connect
             parameters = pika.URLParameters(amqp_url)
-            self.connectionSAGA= pika.BlockingConnection(parameters)
+            self.connectionSAGA = pika.BlockingConnection(parameters)
 
             return self.on_open_SAGA(),"Connection and queues are correctly established"
 
@@ -180,7 +179,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             if (self.connectionSAGA != None):
                 self.connectionSAGA.close()
 
-            return False,"Error in establishing connection"
+        return False,"Error in establishing connection"
 
             
 

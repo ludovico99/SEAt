@@ -64,36 +64,36 @@ services:
       - accounting
       - rabbitmq
 
-  # quote: 
-  #   build: ./quoteService
-  #   volumes:
-  #     - ./quoteService/src:/home/quoteService
-  #   ports:
-  #     - "50053:50053"
-  #   depends_on:
-  #     - accounting
+  quote: 
+    build: ./quoteService
+    volumes:
+      - ./quoteService/src:/home/quoteService
+    ports:
+      - "50053:50053"
+    depends_on:
+      - accounting
 
 
-  # reservation: 
-  #   build: ./reservationService
-  #   environment:
-  #     AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
-  #   volumes:
-  #     - ./reservationService/src:/home/reservationService
-  #   ports:
-  #     - "50051:50051"
-  #   depends_on:
-  #     - accounting
-  #     - rabbitmq
+  reservation: 
+    build: ./reservationService
+    environment:
+      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
+    volumes:
+      - ./reservationService/src:/home/reservationService
+    ports:
+      - "50051:50051"
+    depends_on:
+      - accounting
+      - rabbitmq
 
-  # review: 
-  #   build: ./reviewService
-  #   volumes:
-  #     - ./reviewService/src:/home/reviewService
-  #   ports:
-  #     - "50054:50054"
-  #   depends_on:
-  #     - accounting
+  review: 
+    build: ./reviewService
+    volumes:
+      - ./reviewService/src:/home/reviewService
+    ports:
+      - "50054:50054"
+    depends_on:
+      - accounting
 
     # networks:
     #   static-network:

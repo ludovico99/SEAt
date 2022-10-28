@@ -17,7 +17,6 @@ from reservationLogic import ReservationLogic
 import boto3
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
-import socket
 import os
 
 class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
@@ -25,23 +24,132 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     def __init__(self):
 
         
-        # self.ipAddr = "localhost"
         self.db = DBUtils()
         self.logic = ReservationLogic()
+        dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
+        self.prenotazione = dynamoDb.Table('prenotazione')              # serve per la manual reservation
 
-        self.connectionEmail = self.channelEmail = None
-        self.connectionSAGA = self.channelSAGA = None
-        self.corr_id = self.response = None
+        self.connectionEmail =  None
+        self.channelEmail = None
+        self.connectionSAGA = None
+        self.channelSAGA = None
+        self.requestQueue = None
+        self.responseQueue = None
+        self.corr_id = None
       
         accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
         
-        self.amqp_url = os.environ['AMQP_URL']
-        self.establishConnectionSAGA()
+        
+    def on_open (self):
+        try:
+            print ("CONNECTION OPEN")
+            self.channelEmail = self.connectionEmail.channel()   
+            return self.on_channel_open()
 
-        # serve per la manual reservation
-        dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
-        self.prenotazione = dynamoDb.Table('prenotazione')
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
+            return False
+
+    
+    def on_open_SAGA(self):
+        try:
+            print ("CONNECTION OPEN FOR SAGA")
+            self.channelSAGA = self.connectionSAGA.channel()
+            return self.on_channel_open_SAGA()
+        except Exception as e:
+            print(repr(e))
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
+    
+    def on_channel_open (self):
+        try:
+            print("CHANNEL OPEN")
+            self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
+            return self.on_exchange()
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
+            return False
+    
+    
+    def on_channel_open_SAGA (self):
+        try:
+            print("CHANNEL CORRECTLY CREATED")
+            
+            # Dichiarazione per le code delle richieste e delle risposte
+            self.channelSAGA.queue_declare(queue="Pay_request")
+            self.channelSAGA.queue_declare(queue="Pay_response") 
+        
+            self.channelSAGA.queue_declare(queue="History_request")
+            self.channelSAGA.queue_declare(queue="History_response")
+            
+            self.publishRequest = "History_request"
+            
+            
+            # quando consuma da History_request deve eseguire l'update della storia utente
+            self.channelSAGA.basic_consume(
+                    queue="History_request",
+                    on_message_callback=self.updateUserHistory,
+                    auto_ack=True)
+
+            # quando consuma da pay_response valuta se eseguire il rollback oppure no
+            self.channelSAGA.basic_consume(
+                    queue="Pay_response",
+                    on_message_callback=self.onResponseSaga,
+                    auto_ack=True)
+
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
+            return False
+        
+    def on_exchange (self):
+        try:
+            print('Have exchange')
+
+            #CODA PER TUTTE LE RICHIESTE
+            result = self.channelEmail.queue_declare(queue="emailQueue")
+            self.requestQueue = result.method.queue
+
+            #CODA PER LE RISPOSTE
+            result = self.channelEmail.queue_declare(queue='responseQueue:Reservation') 
+            self.responseQueue = result.method.queue
+
+            #BINDING DELLA CODA delle risposte all'exchange con routing key pari a Reservation
+            self.channelEmail.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Reservation.*")
+            return self.on_bind()
+
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
+            return False
+
+    def on_bind(self):
+
+        try:
+            self.channelEmail.basic_consume(
+                    queue=self.responseQueue,
+                    on_message_callback=self.onResponseEmail,
+                    auto_ack=True)
+
+            print("Awaiting email responses")
+            return True
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
+            return False
+    
+        
 
     def getReservedSeats(self, request, context):
         """ get the reserved seats in the specified date
@@ -541,73 +649,55 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
     
              
     def establishConnectionEmail (self):
+        """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
+            for sending the email
+
+        Returns:
+            BOOL: return TRUE if the connection to RabbitMQ server has succeded
+        """
         try :
-            self.connectionEmail = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            amqp_url = os.environ['AMQP_URL']
 
-
-            self.channelEmail = self.connectionEmail.channel()
-
-            # Dichiarazione per le code delle richieste e delle risposte
-            self.channelEmail.queue_declare(queue="emailQueue")
-            self.channelEmail.queue_declare(queue='responseQueue:Reservation') 
+            parameters = pika.URLParameters(amqp_url)
+            self.connection = pika.BlockingConnection(parameters)
             
-            # BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-            self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            self.channelEmail.queue_bind(exchange='topic_logs', queue='responseQueue:Reservation', routing_key="Reservation.*")
-
-            # TODO COSA FARE ALLA RISPOSTA???
-            self.channelEmail.basic_consume(
-                queue='responseQueue:Reservation',
-                on_message_callback=self.onResponseEmail,
-                auto_ack=True)
-
+            return self.on_open(),"Connection and queues are correctly established"
+        
+        except KeyboardInterrupt:
+            if (self.connection != None):
+                self.connection.close()
+       
         except Exception as e:
             print(repr(e))
-            self.connectionEmail.close()
-            return False, "Error in establishing connections and queues"
-        return True,"Connection and queues are correctly established "
+        return False,"Error in establishing connections and queues"
 
     def establishConnectionSAGA (self):
+        """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
+             for implementing Saga pattern
+
+        Returns:
+            BOOL,String: Return a Boolean in order to discriminate the success or failure of the method and an error message
+        """
+
         try :
-            self.connectionSAGA = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
+            amqp_url = os.environ['AMQP_URL']
+            parameters = pika.URLParameters(amqp_url)
+            self.connectionSAGA = pika.BlockingConnection(parameters)
 
-            # parameters = pika.BlockingConnection()
-            # self.connectionSAGA = connection = pika.SelectConnection(parameters, on_open_callback=on_open)
-
-
-            self.channelSAGA = self.connectionSAGA.channel()
-
-            # Dichiarazione per le code delle richieste e delle risposte
-            self.channelSAGA.queue_declare(queue="Pay_request")
-            self.channelSAGA.queue_declare(queue="Pay_response") 
-        
-            self.channelSAGA.queue_declare(queue="History_request")
-            self.channelSAGA.queue_declare(queue="History_response")
-                
-            self.publishRequest = "History_request"
-              
-            # quando consuma da History_request deve eseguire l'update della storia utente
-            self.channelSAGA.basic_consume(
-                    queue="History_request",
-                    on_message_callback=self.updateUserHistory,
-                    auto_ack=True)
-
-            # quando consuma da pay_response valuta se eseguire il rollback oppure no
-            self.channelSAGA.basic_consume(
-                    queue="Pay_response",
-                    on_message_callback=self.onResponseSaga,
-                    auto_ack=True)
-
-
+            return self.on_open_SAGA(),"Connection and queues are correctly established"
+        except KeyboardInterrupt:
+            if (self.connectionSAGA != None):
+                self.connectionSAGA.close()
         except Exception as e:
             print(repr(e))
-            if self.connectionSAGA != None and self.connectionSAGA.is_open():
+
+            if (self.connectionSAGA != None):
                 self.connectionSAGA.close()
-            return False, repr(e)#"Error in establishing connections and queues"
-        return True,"Connection and queues are correctly established "
-    
+
+        return False,"Error in establishing connection"
+
+
+        
         
     def updateUserHistory(self, ch, method, properties, body):
         
@@ -701,7 +791,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
     def onResponseEmail (self, ch, method, properties, body):
         print("RESPONSE: %r:%r" % (method.routing_key, body))
-        self.connectionEmail.close()
+        if self.connectionEmail != None and self.connectionEmail.is_open:
+            self.connectionEmail.close()
     
     def onResponseSaga (self, ch, method, properties, body):
         try:
@@ -716,7 +807,6 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             
             self.responseMsg = msg
             if (esito == "SUCCESS"):
-                self.response = True
                
                 # 1. mandare l'email per notificare il successo delle transazioni
             
@@ -725,8 +815,6 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             
             else:
                 print("ROLLBACK operation: Deleting reservation previously inserted")
-
-                self.response = False
                 # 2. fare il rollback dell'inserimento della prenotazione
                 data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])
                 print("1")
@@ -743,7 +831,6 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             print(repr(e))
             
         finally:
-        
             if self.connectionSAGA != None and self.connectionSAGA.is_open:
                     self.connectionSAGA.close()  
             
@@ -787,27 +874,39 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         return True, "Send operation has succeded"
 
 
-def grpc_server (service):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    grpc_pb2_grpc.add_ReservationServicer_to_server(service, server)
-    print('Starting RESERVATION SERVICE. Listening on port 50051.')
-    server.add_insecure_port('[::]:50051')
-    server.start()
-
-    try:
-        while True:
-            time.sleep(86400)
-    except KeyboardInterrupt:
-        server.stop(0)
-
-def sagaQueueConsumer(service):
-    print(" [x] Awaiting SAGA reservation requests")
-    service.channelSAGA.start_consuming()
-    
 service = ReservationServicer()
-x = threading.Thread(target=grpc_server, args=(service,))
-x.start()
+server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+grpc_pb2_grpc.add_ReservationServicer_to_server(service, server)
+print('Starting RESERVATION SERVICE. Listening on port 50051.')
+server.add_insecure_port('[::]:50051')
+server.start()
+try:
+    while True:
+        time.sleep(86400)
+except KeyboardInterrupt:
+    server.stop(0)
 
-y = threading.Thread(target=sagaQueueConsumer, args=(service,))
-y.start()
-x.join()
+# def grpc_server (service):
+#     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+#     grpc_pb2_grpc.add_ReservationServicer_to_server(service, server)
+#     print('Starting RESERVATION SERVICE. Listening on port 50051.')
+#     server.add_insecure_port('[::]:50051')
+#     server.start()
+
+#     try:
+#         while True:
+#             time.sleep(86400)
+#     except KeyboardInterrupt:
+#         server.stop(0)
+
+# def sagaQueueConsumer(service):
+#     print(" [x] Awaiting SAGA reservation requests")
+#     service.channelSAGA.start_consuming()
+    
+# service = ReservationServicer()
+# x = threading.Thread(target=grpc_server, args=(service,))
+# x.start()
+
+# y = threading.Thread(target=sagaQueueConsumer, args=(service,))
+# y.start()
+# x.join()
