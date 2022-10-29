@@ -54,10 +54,10 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                     on_message_callback=self.onDeleteRequest,
                     auto_ack=True)
 
-            self.channelSAGA.basic_consume(
-                    queue="Account_response",
-                    on_message_callback=self.onDeleteResponse,
-                    auto_ack=True)
+            # self.channelSAGA.basic_consume(
+            #         queue="Account_response",
+            #         on_message_callback=self.onDeleteResponse,
+            #         auto_ack=True)
             return True
         except Exception as e:
             print(repr(e))
@@ -183,25 +183,25 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
 
             
 
-    def onDeleteResponse (self,ch,method,properties,body):
-        """ Callback function for messages that tell if the delete operation has succeded or not
+    # def onDeleteResponse (self,ch,method,properties,body):
+    #     """ Callback function for messages that tell if the delete operation has succeded or not
 
-        Args:
-            ch (BlockingChannel): Instance of Blocking channel over which the communication is happening
-            method (Delivery): meta information regarding the message delivery
-            properties (BasicProperties): user-defined properties on the message
-            body (string): body of the message
-        """
-        try:
-            #request = "{}:{}:{}".format(username,admin,"DELETE operation ended successfully")  
-            response = body.decode("utf-8").split(':')
-            print("\nMessage from Payment_response: {}".format(response))
+    #     Args:
+    #         ch (BlockingChannel): Instance of Blocking channel over which the communication is happening
+    #         method (Delivery): meta information regarding the message delivery
+    #         properties (BasicProperties): user-defined properties on the message
+    #         body (string): body of the message
+    #     """
+    #     try:
+    #         #request = "{}:{}:{}".format(username,admin,"DELETE operation ended successfully")  
+    #         response = body.decode("utf-8").split(':')
+    #         print("\nMessage from Payment_response: {}".format(response))
         
-        except Exception as e:
-            print(repr(e))
-        finally: 
-            if self.connectionSAGA != None and self.connectionSAGA.is_open:
-                self.connectionSAGA.close()
+    #     except Exception as e:
+    #         print(repr(e))
+    #     finally: 
+    #         if self.connectionSAGA != None and self.connectionSAGA.is_open:
+    #             self.connectionSAGA.close()
 
     def onDeleteRequest (self, ch, method, properties, body):
 
@@ -322,6 +322,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                         reply_to= "Account_response",
                     ),
                 body=request)
+                
 
         except Exception as e:
             print(repr(e))
@@ -620,14 +621,18 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                         ),
                     body=request
                 ),
-
+                
                 self.connectionSAGA.process_data_events(time_limit=None)  
+                
                 print("END")
             else : return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
 
         except Exception as e:
             print(repr(e))
             return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
+        
+        if self.connectionSAGA != None and self.connectionSAGA.is_open:
+            self.connectionSAGA.close()
 
         response = grpc_pb2.response(operationResult = True, errorMessage = "Delete has succeded")
         return response

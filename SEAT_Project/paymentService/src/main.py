@@ -391,7 +391,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             request = "FAILURE:{}:{}:{}:{}".format(username,admin,"Delete in payment service has failed",list)
                             
             # self.channelSAGA.basic_publish(exchange='topic_logs_2', routing_key="Account.request.1", body=request)
-            self.channelSAGA.basic_publish(exchange='', routing_key=properties.reply_to,
+            self.channelSAGA.basic_publish(exchange='', routing_key="Account_request",
                 properties=pika.BasicProperties(
                     reply_to= "Payment_response",
                 ),
