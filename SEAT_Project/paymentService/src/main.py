@@ -298,8 +298,8 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             self.channelSAGA.queue_declare(queue="History_response")
 
             # Dichiarazione per le code delle richieste e delle risposte
-            # self.channelSAGA.queue_declare(queue="Account_request")
-            # self.channelSAGA.queue_declare(queue="Account_response")
+            self.channelSAGA.queue_declare(queue="Account_request")
+            self.channelSAGA.queue_declare(queue="Account_response")
 
             self.channelSAGA.queue_declare(queue="Payment_request")
             self.channelSAGA.queue_declare(queue="Payment_response") 
@@ -379,7 +379,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
             print(properties.reply_to)
 
-            self.channelSAGA.basic_publish(exchange='', routing_key=properties.reply_to,
+            self.channelSAGA.basic_publish(exchange='', routing_key="Account_request",
             properties=pika.BasicProperties(
                 reply_to= "Payment_response",
             ),
@@ -424,8 +424,10 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             # self.channelSAGA.basic_publish(exchange='topic_logs_2', routing_key="Account.response.1", body=request)
             print(properties.reply_to)
             self.channelSAGA.basic_publish(exchange='', routing_key= properties.reply_to,
-                    properties=pika.BasicProperties(reply_to = None),
-            body=request)
+                properties=pika.BasicProperties(
+                    reply_to = None
+                ),
+                body=request)
         except Exception as e:
             print(repr(e))
         finally:

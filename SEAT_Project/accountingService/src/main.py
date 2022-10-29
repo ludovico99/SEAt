@@ -616,7 +616,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                     exchange='', 
                     routing_key= "Payment_request", 
                     properties=pika.BasicProperties(
-                            reply_to= "Account_request",
+                            reply_to= "Account_response",
                         ),
                     body=request
                 ),
