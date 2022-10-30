@@ -28,6 +28,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         self.logic = ReservationLogic()
         dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
         self.prenotazione = dynamoDb.Table('prenotazione')              # serve per la manual reservation
+        self.storiaUtente = dynamoDb.Table('storiaUtente')
+
 
         self.connectionEmail =  None
         self.channelEmail = None
@@ -49,8 +51,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
         except Exception as e:
             print(repr(e))
-            if self.connection != None:
-                self.connection.close()
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
             return False
 
     
@@ -72,8 +74,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             return self.on_exchange()
         except Exception as e:
             print(repr(e))
-            if self.connection != None:
-                self.connection.close()
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
             return False
     
     
@@ -129,8 +131,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
         except Exception as e:
             print(repr(e))
-            if self.connection != None:
-                self.connection.close()
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
             return False
 
     def on_bind(self):
@@ -145,8 +147,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             return True
         except Exception as e:
             print(repr(e))
-            if self.connection != None:
-                self.connection.close()
+            if self.connectionEmail != None:
+                self.connectionEmail.close()
             return False
     
         
@@ -541,7 +543,9 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
                 print("SENDING A PAYMENT REQUEST TO {} WITH EMAIL {}".format(username, email))
                 
                 self.publish(request, 'Pay_request')  
-                self.connectionSAGA.process_data_events(time_limit=None)     
+                # self.connectionSAGA.process_data_events(time_limit=None)     
+                self.channelSAGA.start_consuming()   #eli
+                print("END SAGA")
 
         except Exception as e:
 
@@ -659,13 +663,13 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             amqp_url = os.environ['AMQP_URL']
 
             parameters = pika.URLParameters(amqp_url)
-            self.connection = pika.BlockingConnection(parameters)
+            self.connectionEmail = pika.BlockingConnection(parameters)
             
             return self.on_open(),"Connection and queues are correctly established"
         
         except KeyboardInterrupt:
-            if (self.connection != None):
-                self.connection.close()
+            if (self.connectionEmail != None):
+                self.connectionEmail.close()
        
         except Exception as e:
             print(repr(e))
@@ -806,16 +810,10 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             msg = response[4] 
             
             self.responseMsg = msg
-            if (esito == "SUCCESS"):
-               
-                # 1. mandare l'email per notificare il successo delle transazioni
-            
-                result, errorMsg = self.sendEmail (username, email)
-                print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
-            
-            else:
+            if (esito != "SUCCESS"):
+
+                # 1. fare il rollback dell'inserimento della prenotazione
                 print("ROLLBACK operation: Deleting reservation previously inserted")
-                # 2. fare il rollback dell'inserimento della prenotazione
                 data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])
                 print("1")
                 for i in range (0,len(data)) :
@@ -827,10 +825,19 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
                         ReturnValues = 'ALL_OLD'
                     )
                     print("[cancellazione prenotazione] result=", result1)  
+            
+            
+            else:   
+                result, errorMsg = self.sendEmail (username, email)
+                print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
+            
+        
         except Exception as e:
             print(repr(e))
             
         finally:
+            self.channelSAGA.stop_consuming()
+            print("sblocco la rpc")
             if self.connectionSAGA != None and self.connectionSAGA.is_open:
                     self.connectionSAGA.close()  
             

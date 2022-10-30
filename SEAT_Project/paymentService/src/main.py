@@ -465,9 +465,10 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 request = "FAILURE:{}:{}:{}:{}".format(id,username,email,msg)
                             
             else :
-                print("SENDING EMAIL")
-                result, errorMsg = self.sendEmail (username, email)
-                print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
+                # non serve mandare un'email ... lo facciamo al completamento della prenotazione
+                # print("SENDING EMAIL")
+                # result, errorMsg = self.sendEmail (username, email)
+                # print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
                 request = "SUCCESS:{}:{}:{}:{}".format(id,username,email,msg)
             
             self.publish(request, 'Pay_response')
