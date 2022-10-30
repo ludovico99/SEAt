@@ -78,6 +78,8 @@ connettersi alle istanze EC2 create (Viene specificata nel comando).
 4) sudo pip3 install grpcio
 5) sudo pip3 install grpcio-tools
 6) scp -i "me-key.pem" -r ./Progetto/ ec2-user@54.174.246.244:/home/ec2-user/
+scp -i "me-key.pem" -r ./SEAt/SEAT_Project/ ubuntu@54.167.143.66:/home/ubuntu
+
 7) ssh -i "me-key.pem" ec2-user@54.174.246.244
 Per eseguire sulla stessa macchina avviare due connessione ssh
 

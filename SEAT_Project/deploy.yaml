@@ -1,39 +1,114 @@
 ---
 - hosts: all
   vars:
-    local_app_dir: "/home/ludovico99/Scrivania/Progetto"
-    remote_home: "/home/ec2-user"
-    remote_app_dir: "{{remote_home}}/Progetto"
+    local_app_dir: "/home/ludovico99/Scrivania/SEAt/SEAT_Project"
+    remote_home: "/home/ubuntu"
+    #remote_home: "/home/ec2-user"
+    remote_app_dir: "{{remote_home}}/SEAT_Project"
+    local_aws_cred: "/$HOME/.aws/credentials"
+    remote_aws_cred: "{{remote_home}}/.aws/credentials"
+
 
   tasks:
-    - name: copy application directory
+    #scp -i "me-key.pem" -r ./SEAt/SEAT_Project/ ubuntu@3.93.6.99:/home/ubuntu << TERMINALE per questioni di tempo
+
+    # - name: copy application directory
+    #   copy:
+    #     src: "{{ local_app_dir }}/"
+    #     dest: "{{ remote_app_dir }}"
+    #   register: app  # save task output 
+
+
+    - name: ansible create .aws directory 
+      file:
+        path: "{{remote_home}}/.aws"
+        mode: "u=rwx,g=rwx,o=rwx"
+        recurse: yes
+        state: directory
+
+    - name: copy aws credentials
       copy:
-        src: "{{ local_app_dir }}/"
-        dest: "{{ remote_app_dir }}"
-      register: app  # save task output 
+        src: "/$HOME/.aws/credentials"
+        dest: "{{ remote_aws_cred }}"
 
     - name: install python 3
       become: yes # we need root privileges 
-      yum:
+      apt:
         name: python3
         state: present
-        
-    - name: install gnome-terminal
-      become: yes # we need root privileges 
-      yum:
-        name: gnome-terminal
-        
-    - name: install grpcio
-      become: yes
-      pip:
-        name: grpcio
-        executable: pip3
 
-    - name: install grpcio-tools
-      become: yes
-      pip:
-        name: grpcio-tools
-        executable: pip3
+    # - name: Install Python pip
+    #   apt: name={{ item }} update_cache=true state=present force_apt_get=yes
+    #   with_items:
+    #   - python3-pip
+    #   become: true
+
+
+    - name: Install docker packages
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      apt:
+        name: ['apt-transport-https','ca-certificates', 'curl', 'software-properties-common']
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+
+    - name: Add Docker s GPG key for ubuntu from official site
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags:
+        - docker
+
+    - name: Verify gpg key with the fingerprint
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      apt_key:
+        id: 0EBFCD88
+        state: present
+      tags:
+        - docker
+
+    - name: Configure Docker for ubuntu stable repository
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+
+    - name: Install docker-ce
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+
+    - name: Add "ubuntu" user to "docker" group
+      become: yes # we need root privileges 
+      remote_user: ubuntu
+      user:
+        name: "ubuntu"
+        group: "docker"
+        append: yes
+      tags:
+        - docker
+
+    - name: Install docker-compose from official github repo
+      become: yes # we need root privileges 
+      remote_user: ansible_ubuntu_demo
+      get_url:
+        url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
 
     - name: copy systemd unit file
       become: yes 
@@ -48,7 +123,15 @@
         state: restarted
         name: "progetto.service"
         enabled: yes
-      when: app.changed # only restart if new version was uploaded
+      #when: app.changed # only restart if new version was uploaded
+
+  handlers:
+    - name: restart docker
+      service: 
+        name: docker 
+        state: restarted
+
+   
 
 
 

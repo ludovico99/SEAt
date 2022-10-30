@@ -1,10 +1,10 @@
 #!/bin/sh
 
 echo \
-"[default] 
-aws_access_key_id=ASIAZSPXN3SF44NHLCGI 
-aws_secret_access_key=xysMJ1dGIfEVemLbUMyTVV3kXC/kTBpl3HXGl1fE 
-aws_session_token=FwoGZXIvYXdzEIL//////////wEaDMBXOJMd4tzvEmTLYSLXAUAEB4ycuLExgBht0m9yH7SHGVespdinB9GwDF82eFc68KYvnR3lv9GdXSfkH8UC/Dd2KIspSKQiO0fsLKTFVYOrfCIJo4/mM1CuRvX3nltepAJRe0rVnKJynWWbww6k1/TpbrxK4h0wyCHT7qUF3be/ZLAEPr3pgT9rUVr9TABar0/ZbcTJ+Dok5nYBJNv3qeItQuEGLE5nP6Y2Rhgi5lQR7Lz5PY8tAZg4PNF7FlDAGBub8R38tViMQOKVTDLacSKxo2CDqyE/yyvohOAIi5qmzIf5TjixKLfz+JoGMi1rye7sl6X8WPenoigRMUIuLujhQZdBSZz1pM4es1aJuMHcxx07kk2Y+5BHcuE=" > $HOME/.aws/credentials 
+"[default]
+aws_access_key_id=ASIAZSPXN3SFVPXAVZNX
+aws_secret_access_key=UHMdbe96kChUG5Np+2K6Ii6ITLjwex0iPyXOAq+/
+aws_session_token=FwoGZXIvYXdzEIf//////////wEaDFXzO5kj/Yk1oq/SgSLXAQKkBT6ujJ4I/1zr5rM1G72A/mvCyoXa5Cdcev89h/ITG0jIBjdP32DrdnEKVE6N4w/uABWnas3IeUgy7ySHwDRX0vMYhMRrxlB3uTgtrccZidJhakfnZ959ntKmpCztc9JQluKuWjzJyzrCAQ6VmaUcE0g0FlIwdz8V/TPIUJp3CLzfSfYw0fd7fuKi60Aae8FZbno+y3SZ0jYSrwQasOaWYUbCHON4f9lZkvPZk+pFqVKKWt/MAl6XFYUIRKFdIBlIWczReSJ1HK+En0LutcLZtMlfkUKyKInu+ZoGMi1aCnM/ilbo8iyD3qLNlY3L0UpCU/7ZnpSMgWGHbCaeiiZqsdgrT3D6SN4GbiI=" > $HOME/.aws/credentials 
 
 cp $HOME/.aws/credentials ./accountingService/credentials
 cp $HOME/.aws/credentials ./quoteService/credentials
