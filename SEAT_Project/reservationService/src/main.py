@@ -836,8 +836,9 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             print(repr(e))
             
         finally:
-            self.channelSAGA.stop_consuming()
-            print("sblocco la rpc")
+            if self.channelSAGA != None:
+                self.channelSAGA.stop_consuming()
+
             if self.connectionSAGA != None and self.connectionSAGA.is_open:
                     self.connectionSAGA.close()  
             
