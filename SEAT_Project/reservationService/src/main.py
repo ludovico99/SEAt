@@ -14,6 +14,7 @@ import geopy.geocoders
 from decimal import Decimal
 from dBUtils import DBUtils
 from reservationLogic import ReservationLogic
+from connectionEmail import ConnectionEmail
 import boto3
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -43,113 +44,113 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
         
         
-    def on_open (self):
-        try:
-            print ("CONNECTION OPEN")
-            self.channelEmail = self.connectionEmail.channel()   
-            return self.on_channel_open()
+    # def on_open (self):
+    #     try:
+    #         print ("CONNECTION OPEN")
+    #         self.channelEmail = self.connectionEmail.channel()   
+    #         return self.on_channel_open()
 
-        except Exception as e:
-            print(repr(e))
-            if self.connectionEmail != None:
-                self.connectionEmail.close()
-            return False
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if self.connectionEmail != None:
+    #             self.connectionEmail.close()
+    #         return False
 
     
-    def on_open_SAGA(self):
-        try:
-            print ("CONNECTION OPEN FOR SAGA")
-            self.channelSAGA = self.connectionSAGA.channel()
-            return self.on_channel_open_SAGA()
-        except Exception as e:
-            print(repr(e))
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-            return False
+    # def on_open_SAGA(self):
+    #     try:
+    #         print ("CONNECTION OPEN FOR SAGA")
+    #         self.channelSAGA = self.connectionSAGA.channel()
+    #         return self.on_channel_open_SAGA()
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if (self.connectionSAGA != None):
+    #             self.connectionSAGA.close()
+            # return False
     
-    def on_channel_open (self):
-        try:
-            print("CHANNEL OPEN")
-            self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            return self.on_exchange()
-        except Exception as e:
-            print(repr(e))
-            if self.connectionEmail != None:
-                self.connectionEmail.close()
-            return False
+    # def on_channel_open (self):
+    #     try:
+    #         print("CHANNEL OPEN")
+    #         self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
+    #         return self.on_exchange()
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if self.connectionEmail != None:
+    #             self.connectionEmail.close()
+    #         return False
     
     
-    def on_channel_open_SAGA (self):
-        try:
-            print("CHANNEL CORRECTLY CREATED")
+    # def on_channel_open_SAGA (self):
+    #     try:
+    #         print("CHANNEL CORRECTLY CREATED")
             
-            # Dichiarazione per le code delle richieste e delle risposte
-            self.channelSAGA.queue_declare(queue="Pay_request")
-            self.channelSAGA.queue_declare(queue="Pay_response") 
+    #         # Dichiarazione per le code delle richieste e delle risposte
+    #         self.channelSAGA.queue_declare(queue="Pay_request")
+    #         self.channelSAGA.queue_declare(queue="Pay_response") 
         
-            self.channelSAGA.queue_declare(queue="History_request")
-            self.channelSAGA.queue_declare(queue="History_response")
+    #         self.channelSAGA.queue_declare(queue="History_request")
+    #         self.channelSAGA.queue_declare(queue="History_response")
             
-            self.publishRequest = "History_request"
+    #         self.publishRequest = "History_request"
             
             
-            # quando consuma da History_request deve eseguire l'update della storia utente
-            self.channelSAGA.basic_consume(
-                    queue="History_request",
-                    on_message_callback=self.updateUserHistory,
-                    auto_ack=True)
+    #         # quando consuma da History_request deve eseguire l'update della storia utente
+    #         self.channelSAGA.basic_consume(
+    #                 queue="History_request",
+    #                 on_message_callback=self.updateUserHistory,
+    #                 auto_ack=True)
 
-            # quando consuma da pay_response valuta se eseguire il rollback oppure no
-            self.channelSAGA.basic_consume(
-                    queue="Pay_response",
-                    on_message_callback=self.onResponseSaga,
-                    auto_ack=True)
+    #         # quando consuma da pay_response valuta se eseguire il rollback oppure no
+    #         self.channelSAGA.basic_consume(
+    #                 queue="Pay_response",
+    #                 on_message_callback=self.onResponseSaga,
+    #                 auto_ack=True)
 
-            return True
+    #         return True
 
-        except Exception as e:
-            print(repr(e))
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-            return False
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if (self.connectionSAGA != None):
+    #             self.connectionSAGA.close()
+    #         return False
         
-    def on_exchange (self):
-        try:
-            print('Have exchange')
+    # def on_exchange (self):
+    #     try:
+    #         print('Have exchange')
 
-            #CODA PER TUTTE LE RICHIESTE
-            result = self.channelEmail.queue_declare(queue="emailQueue")
-            self.requestQueue = result.method.queue
+    #         #CODA PER TUTTE LE RICHIESTE
+    #         result = self.channelEmail.queue_declare(queue="emailQueue")
+    #         self.requestQueue = result.method.queue
 
-            #CODA PER LE RISPOSTE
-            result = self.channelEmail.queue_declare(queue='responseQueue:Reservation') 
-            self.responseQueue = result.method.queue
+    #         #CODA PER LE RISPOSTE
+    #         result = self.channelEmail.queue_declare(queue='responseQueue:Reservation') 
+    #         self.responseQueue = result.method.queue
 
-            #BINDING DELLA CODA delle risposte all'exchange con routing key pari a Reservation
-            self.channelEmail.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Reservation.*")
-            return self.on_bind()
+    #         #BINDING DELLA CODA delle risposte all'exchange con routing key pari a Reservation
+    #         self.channelEmail.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Reservation.*")
+    #         return self.on_bind()
 
-        except Exception as e:
-            print(repr(e))
-            if self.connectionEmail != None:
-                self.connectionEmail.close()
-            return False
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if self.connectionEmail != None:
+    #             self.connectionEmail.close()
+    #         return False
 
-    def on_bind(self):
+    # def on_bind(self):
 
-        try:
-            self.channelEmail.basic_consume(
-                    queue=self.responseQueue,
-                    on_message_callback=self.onResponseEmail,
-                    auto_ack=True)
+    #     try:
+    #         self.channelEmail.basic_consume(
+    #                 queue=self.responseQueue,
+    #                 on_message_callback=self.onResponseEmail,
+    #                 auto_ack=True)
 
-            print("Awaiting email responses")
-            return True
-        except Exception as e:
-            print(repr(e))
-            if self.connectionEmail != None:
-                self.connectionEmail.close()
-            return False
+    #         print("Awaiting email responses")
+    #         return True
+    #     except Exception as e:
+    #         print(repr(e))
+    #         if self.connectionEmail != None:
+    #             self.connectionEmail.close()
+    #         return False
     
         
 
@@ -531,21 +532,28 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
           
             # 3. se il pagamento è online inizia SAGA 
             if (payOnline == True):
-    
-                result,errorMsg = self.establishConnectionSAGA ()
 
+                connessione = ConnectionPayment()
+                result, errorMsg = connessione.payOnline(self.stubAccounting)
                 if result == False:
-                   return  grpc_pb2.response(operationResult = False,
+                    return  grpc_pb2.response(operationResult = False,
                     errorMessage =errorMsg) 
+
+    
+                # result,errorMsg = self.establishConnectionSAGA ()
+
+                # if result == False:
+                #    return  grpc_pb2.response(operationResult = False,
+                #     errorMessage =errorMsg) 
                 
-                # 4. pubblica un messaggio  per triggerare il pagamento
-                request = "{}:{}:{}:{}:{}:{}:{}:{}".format (id.time,username, email, lido_id, costo, distance, budgetDifference, idCard)
-                print("SENDING A PAYMENT REQUEST TO {} WITH EMAIL {}".format(username, email))
+                # # 4. pubblica un messaggio  per triggerare il pagamento
+                # request = "{}:{}:{}:{}:{}:{}:{}:{}".format (id.time,username, email, lido_id, costo, distance, budgetDifference, idCard)
+                # print("SENDING A PAYMENT REQUEST TO {} WITH EMAIL {}".format(username, email))
                 
-                self.publish(request, 'Pay_request')  
-                # self.connectionSAGA.process_data_events(time_limit=None)     
-                self.channelSAGA.start_consuming()   #eli
-                print("END SAGA")
+                # self.publish(request, 'Pay_request')  
+                # # self.connectionSAGA.process_data_events(time_limit=None)     
+                # self.channelSAGA.start_consuming()   #eli
+                # print("END SAGA")
 
         except Exception as e:
 
@@ -652,234 +660,239 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         
     
              
-    def establishConnectionEmail (self):
-        """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
-            for sending the email
+    # def establishConnectionEmail (self):
+    #     """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
+    #         for sending the email
 
-        Returns:
-            BOOL: return TRUE if the connection to RabbitMQ server has succeded
-        """
-        try :
-            amqp_url = os.environ['AMQP_URL']
+    #     Returns:
+    #         BOOL: return TRUE if the connection to RabbitMQ server has succeded
+    #     """
+    #     try :
+    #         amqp_url = os.environ['AMQP_URL']
 
-            parameters = pika.URLParameters(amqp_url)
-            self.connectionEmail = pika.BlockingConnection(parameters)
+    #         parameters = pika.URLParameters(amqp_url)
+    #         self.connectionEmail = pika.BlockingConnection(parameters)
             
-            return self.on_open(),"Connection and queues are correctly established"
+    #         return self.on_open(),"Connection and queues are correctly established"
         
-        except KeyboardInterrupt:
-            if (self.connectionEmail != None):
-                self.connectionEmail.close()
+    #     except KeyboardInterrupt:
+    #         if (self.connectionEmail != None):
+    #             self.connectionEmail.close()
        
-        except Exception as e:
-            print(repr(e))
-        return False,"Error in establishing connections and queues"
+    #     except Exception as e:
+    #         print(repr(e))
+    #     return False,"Error in establishing connections and queues"
 
-    def establishConnectionSAGA (self):
-        """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
-             for implementing Saga pattern
+    # def establishConnectionSAGA (self):
+    #     """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
+    #          for implementing Saga pattern
 
-        Returns:
-            BOOL,String: Return a Boolean in order to discriminate the success or failure of the method and an error message
-        """
+    #     Returns:
+    #         BOOL,String: Return a Boolean in order to discriminate the success or failure of the method and an error message
+    #     """
 
-        try :
-            amqp_url = os.environ['AMQP_URL']
-            parameters = pika.URLParameters(amqp_url)
-            self.connectionSAGA = pika.BlockingConnection(parameters)
+    #     try :
+    #         amqp_url = os.environ['AMQP_URL']
+    #         parameters = pika.URLParameters(amqp_url)
+    #         self.connectionSAGA = pika.BlockingConnection(parameters)
 
-            return self.on_open_SAGA(),"Connection and queues are correctly established"
-        except KeyboardInterrupt:
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-        except Exception as e:
-            print(repr(e))
+    #         return self.on_open_SAGA(),"Connection and queues are correctly established"
+    #     except KeyboardInterrupt:
+    #         if (self.connectionSAGA != None):
+    #             self.connectionSAGA.close()
+    #     except Exception as e:
+    #         print(repr(e))
 
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
+    #         if (self.connectionSAGA != None):
+    #             self.connectionSAGA.close()
 
-        return False,"Error in establishing connection"
+    #     return False,"Error in establishing connection"
 
 
         
         
-    def updateUserHistory(self, ch, method, properties, body):
+    # def updateUserHistory(self, ch, method, properties, body):
         
-        print("\nUPDATE USER HISTORY phase has started: from History_request to History_response")
-        try:
-            request = body.decode("utf-8").split(':')
-            id = request[0]
-            username = request[1]
-            email = request[2]
-            lido_id = request[3]
-            costo = int(request[4])
-            distance = float(request[5])
-            budgetDifference=float(request[6])
-            cardId = int(request[7])
+    #     print("\nUPDATE USER HISTORY phase has started: from History_request to History_response")
+    #     try:
+    #         request = body.decode("utf-8").split(':')
+    #         id = request[0]
+    #         username = request[1]
+    #         email = request[2]
+    #         lido_id = request[3]
+    #         costo = int(request[4])
+    #         distance = float(request[5])
+    #         budgetDifference=float(request[6])
+    #         cardId = int(request[7])
 
-            print("[Storia utente] Username:{}, distanza:{}, differenza dal budget: {}".format (
-                    username, distance, budgetDifference))
+    #         print("[Storia utente] Username:{}, distanza:{}, differenza dal budget: {}".format (
+    #                 username, distance, budgetDifference))
 
             
-            # 1. Leggi i valori della tabella per l'utente, se esistono
-            data = self.db.scanDb('storiaUtente', ['userId'], [username])
+    #         # 1. Leggi i valori della tabella per l'utente, se esistono
+    #         data = self.db.scanDb('storiaUtente', ['userId'], [username])
             
-            # 2. se non esistono valori inizializzo tutto a 0
-            if len(data) == 0:
-                mediaDistanza = mediaDifferenzaBudget = 0.0
-                varianzaDistanza = varianzaDifferenzaBudget = 0.
-                counter = 0
-                nRistorazione = nBar = nCampi = nAnimazione = nPalestra = 0
-            else:
-                mediaDistanza = float(data[0]['mediaDistanza'])
-                varianzaDistanza = float(data[0]['varianzaDistanza'])
-                mediaDifferenzaBudget = float(data[0]['mediaDifferenzaBudget'])
-                varianzaDifferenzaBudget = float(data[0]['varianzaDifferenzaBudget'])
-                counter = int(data[0]['tot'])
-                nRistorazione = data[0]['nRistorazione']
-                nBar = data[0]['nBar']
-                nCampi = data[0]['nCampi']
-                nAnimazione = data[0]['nAnimazione']
-                nPalestra = data[0]['nPalestra']
+    #         # 2. se non esistono valori inizializzo tutto a 0
+    #         if len(data) == 0:
+    #             mediaDistanza = mediaDifferenzaBudget = 0.0
+    #             varianzaDistanza = varianzaDifferenzaBudget = 0.
+    #             counter = 0
+    #             nRistorazione = nBar = nCampi = nAnimazione = nPalestra = 0
+    #         else:
+    #             mediaDistanza = float(data[0]['mediaDistanza'])
+    #             varianzaDistanza = float(data[0]['varianzaDistanza'])
+    #             mediaDifferenzaBudget = float(data[0]['mediaDifferenzaBudget'])
+    #             varianzaDifferenzaBudget = float(data[0]['varianzaDifferenzaBudget'])
+    #             counter = int(data[0]['tot'])
+    #             nRistorazione = data[0]['nRistorazione']
+    #             nBar = data[0]['nBar']
+    #             nCampi = data[0]['nCampi']
+    #             nAnimazione = data[0]['nAnimazione']
+    #             nPalestra = data[0]['nPalestra']
             
-            # 3. incrementa il contatore delle caratteristiche che l'utente ha scelto nei lidi
+    #         # 3. incrementa il contatore delle caratteristiche che l'utente ha scelto nei lidi
 
-            responseAccounting = self.stubAccounting.getBeachClubDetails(grpc_pb2.reviewRequest(usernameBeachClub=lido_id))
-            if responseAccounting.ristorazione == True:
-                nRistorazione = nRistorazione + 1
-            if responseAccounting.bar == True:
-                nBar = nBar +1
-            if responseAccounting.campi == True:
-                nCampi = nCampi +1
-            if responseAccounting.animazione == True:
-                nAnimazione = nAnimazione + 1
-            if responseAccounting.palestra == True:   
-                nPalestra = nPalestra + 1
+    #         responseAccounting = self.stubAccounting.getBeachClubDetails(grpc_pb2.reviewRequest(usernameBeachClub=lido_id))
+    #         if responseAccounting.ristorazione == True:
+    #             nRistorazione = nRistorazione + 1
+    #         if responseAccounting.bar == True:
+    #             nBar = nBar +1
+    #         if responseAccounting.campi == True:
+    #             nCampi = nCampi +1
+    #         if responseAccounting.animazione == True:
+    #             nAnimazione = nAnimazione + 1
+    #         if responseAccounting.palestra == True:   
+    #             nPalestra = nPalestra + 1
             
-            # 4. aggiorna le medie e le varianze
-            varianzaDistanza = varianzaDistanza + (counter/(counter+1))*((distance-mediaDistanza)**2)
-            varianzaDifferenzaBudget = varianzaDifferenzaBudget + (counter/(counter+1))*((budgetDifference-mediaDifferenzaBudget)**2)
+    #         # 4. aggiorna le medie e le varianze
+    #         varianzaDistanza = varianzaDistanza + (counter/(counter+1))*((distance-mediaDistanza)**2)
+    #         varianzaDifferenzaBudget = varianzaDifferenzaBudget + (counter/(counter+1))*((budgetDifference-mediaDifferenzaBudget)**2)
 
-            mediaDistanza = mediaDistanza + (distance-mediaDistanza)/(counter+1)
-            mediaDifferenzaBudget = mediaDifferenzaBudget + (budgetDifference-mediaDifferenzaBudget)/(counter+1)
+    #         mediaDistanza = mediaDistanza + (distance-mediaDistanza)/(counter+1)
+    #         mediaDifferenzaBudget = mediaDifferenzaBudget + (budgetDifference-mediaDifferenzaBudget)/(counter+1)
             
-            counter = counter + 1
+    #         counter = counter + 1
             
 
-            # 5. aggiorna le entry nel database per le recommendation
-            expressionAttributeValues = {":val1": Decimal (int(mediaDistanza)),":val2": Decimal(int(varianzaDistanza)),":val3": Decimal(int(mediaDifferenzaBudget)),
-            ":val4": Decimal(int(varianzaDifferenzaBudget)),":val5": counter, ":val6": nRistorazione,":val7": nBar,":val8": nCampi,
-            ":val9": nAnimazione,":val10": nPalestra }
+    #         # 5. aggiorna le entry nel database per le recommendation
+    #         expressionAttributeValues = {":val1": Decimal (int(mediaDistanza)),":val2": Decimal(int(varianzaDistanza)),":val3": Decimal(int(mediaDifferenzaBudget)),
+    #         ":val4": Decimal(int(varianzaDifferenzaBudget)),":val5": counter, ":val6": nRistorazione,":val7": nBar,":val8": nCampi,
+    #         ":val9": nAnimazione,":val10": nPalestra }
         
-            self.storiaUtente.update_item (
-                Key = {
-                             'userId': username,
-                        },
-                UpdateExpression= "SET mediaDistanza= :val1, varianzaDistanza =:val2, mediaDifferenzaBudget =:val3, varianzaDifferenzaBudget =:val4, tot =:val5, nRistorazione =:val6, nBar =:val7, nCampi =:val8, nAnimazione =:val9, nPalestra =:val10",
-                ExpressionAttributeValues=expressionAttributeValues,
-                ReturnValues = "ALL_NEW",
-            )
+    #         self.storiaUtente.update_item (
+    #             Key = {
+    #                          'userId': username,
+    #                     },
+    #             UpdateExpression= "SET mediaDistanza= :val1, varianzaDistanza =:val2, mediaDifferenzaBudget =:val3, varianzaDifferenzaBudget =:val4, tot =:val5, nRistorazione =:val6, nBar =:val7, nCampi =:val8, nAnimazione =:val9, nPalestra =:val10",
+    #             ExpressionAttributeValues=expressionAttributeValues,
+    #             ReturnValues = "ALL_NEW",
+    #         )
             
-            msg = "Saga completed correctly"
-            print("[Update user history]:", msg)
-            request = "SUCCESS:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,msg)
+    #         msg = "Saga completed correctly"
+    #         print("[Update user history]:", msg)
+    #         request = "SUCCESS:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,msg)
             
-            self.publish(request, 'History_response')
+    #         self.publish(request, 'History_response')
 
-        except Exception as e:
-            print(repr(e))
-            errorMsg = "Update user history operation has failed"
-            request = "FAILURE:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,errorMsg)
-            self.publish(request, 'History_response')
+    #     except Exception as e:
+    #         print(repr(e))
+    #         errorMsg = "Update user history operation has failed"
+    #         request = "FAILURE:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,errorMsg)
+    #         self.publish(request, 'History_response')
 
 
-    def onResponseEmail (self, ch, method, properties, body):
-        print("RESPONSE: %r:%r" % (method.routing_key, body))
-        if self.connectionEmail != None and self.connectionEmail.is_open:
-            self.connectionEmail.close()
+    # def onResponseEmail (self, ch, method, properties, body):
+    #     print("RESPONSE: %r:%r" % (method.routing_key, body))
+    #     if self.connectionEmail != None and self.connectionEmail.is_open:
+    #         self.connectionEmail.close()
     
-    def onResponseSaga (self, ch, method, properties, body):
-        try:
-            #RESPONSE-> SUCCESS:Prenotazione_ID:username:Email:msg 
-            response = body.decode("utf-8").split(':')
-            print("\nRESPONSE Saga from Pay_response: {}".format(response))
-            esito = str(response[0])
-            prenotazione_id = int(response[1])
-            username = response[2]
-            email = response[3]
-            msg = response[4] 
+    # def onResponseSaga (self, ch, method, properties, body):
+    #     try:
+    #         #RESPONSE-> SUCCESS:Prenotazione_ID:username:Email:msg 
+    #         response = body.decode("utf-8").split(':')
+    #         print("\nRESPONSE Saga from Pay_response: {}".format(response))
+    #         esito = str(response[0])
+    #         prenotazione_id = int(response[1])
+    #         username = response[2]
+    #         email = response[3]
+    #         msg = response[4] 
             
-            self.responseMsg = msg
-            if (esito != "SUCCESS"):
+    #         self.responseMsg = msg
+    #         if (esito != "SUCCESS"):
 
-                # 1. fare il rollback dell'inserimento della prenotazione
-                print("ROLLBACK operation: Deleting reservation previously inserted")
-                data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])
-                print("1")
-                for i in range (0,len(data)) :
-                    result1 = self.prenotazione.delete_item (
-                        Key ={
-                            'prenotazioneId' : prenotazione_id,
-                            'ombrelloneId' : str(data[i]['ombrelloneId'])
-                            },
-                        ReturnValues = 'ALL_OLD'
-                    )
-                    print("[cancellazione prenotazione] result=", result1)  
+    #             # 1. fare il rollback dell'inserimento della prenotazione
+    #             print("ROLLBACK operation: Deleting reservation previously inserted")
+    #             data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])
+    #             print("1")
+    #             for i in range (0,len(data)) :
+    #                 result1 = self.prenotazione.delete_item (
+    #                     Key ={
+    #                         'prenotazioneId' : prenotazione_id,
+    #                         'ombrelloneId' : str(data[i]['ombrelloneId'])
+    #                         },
+    #                     ReturnValues = 'ALL_OLD'
+    #                 )
+    #                 print("[cancellazione prenotazione] result=", result1)  
             
             
-            else:   
-                result, errorMsg = self.sendEmail (username, email)
-                print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
+    #         else:   
+    #             #TODO: SCRIVI BENE QUESTO COMMENTO
+    #             # 2. lascio alla classe connectionEmail la complessità
+    #             #    della gestione delle code
+    #             connessione = ConnectionEmail()
+    #             result, errorMsg = connessione.sendEmail (username, email)
+    #             # result, errorMsg = self.sendEmail (username, email)
+    #             print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
             
         
-        except Exception as e:
-            print(repr(e))
+    #     except Exception as e:
+    #         print(repr(e))
             
-        finally:
-            if self.channelSAGA != None:
-                self.channelSAGA.stop_consuming()
+    #     finally:
+    #         if self.channelSAGA != None:
+    #             self.channelSAGA.stop_consuming()
 
-            if self.connectionSAGA != None and self.connectionSAGA.is_open:
-                    self.connectionSAGA.close()  
+    #         if self.connectionSAGA != None and self.connectionSAGA.is_open:
+    #                 self.connectionSAGA.close()  
             
 
-    def publish(self, request, routingKey):
-        print (request, routingKey)        
-        self.corr_id = str(uuid.uuid4())
-        self.channelSAGA.basic_publish(
-            exchange='',
-            routing_key=routingKey,
-            properties=pika.BasicProperties(
-                correlation_id=self.corr_id,
-            ),
-            body=request)
+    # def publish(self, request, routingKey):
+    #     print (request, routingKey)        
+    #     self.corr_id = str(uuid.uuid4())
+    #     self.channelSAGA.basic_publish(
+    #         exchange='',
+    #         routing_key=routingKey,
+    #         properties=pika.BasicProperties(
+    #             correlation_id=self.corr_id,
+    #         ),
+    #         body=request)
 
 
 
-    def sendEmail(self, username, email):
-        try :
-            result = self.establishConnectionEmail ()
-            if result == False:
-                return False
+    # def sendEmail(self, username, email):
+    #     try :
+    #         result = self.establishConnectionEmail ()
+    #         if result == False:
+    #             return False
 
-            request = "{}:{}#Reservation".format (username,email)
-            #INVIO DEL MESSAGGIO DI RICHIESTA
-            print("SENDING AN EMAIL TO {}".format(request))
-            self.corr_id = str(uuid.uuid4())
-            self.channelEmail.basic_publish(
-                exchange='',
-                routing_key='emailQueue',
-                properties=pika.BasicProperties(
-                    correlation_id=self.corr_id,
-                ),
-                body=request)
+    #         request = "{}:{}#Reservation".format (username,email)
+    #         #INVIO DEL MESSAGGIO DI RICHIESTA
+    #         print("SENDING AN EMAIL TO {}".format(request))
+    #         self.corr_id = str(uuid.uuid4())
+    #         self.channelEmail.basic_publish(
+    #             exchange='',
+    #             routing_key='emailQueue',
+    #             properties=pika.BasicProperties(
+    #                 correlation_id=self.corr_id,
+    #             ),
+    #             body=request)
         
-            self.connectionEmail.process_data_events(time_limit=None)
-        except Exception as e:
-            print(repr(e))
+    #         self.connectionEmail.process_data_events(time_limit=None)
+    #     except Exception as e:
+    #         print(repr(e))
            
-            return False , "Send operation has failed"
-        return True, "Send operation has succeded"
+    #         return False , "Send operation has failed"
+    #     return True, "Send operation has succeded"
 
 
 service = ReservationServicer()
@@ -893,28 +906,3 @@ try:
         time.sleep(86400)
 except KeyboardInterrupt:
     server.stop(0)
-
-# def grpc_server (service):
-#     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-#     grpc_pb2_grpc.add_ReservationServicer_to_server(service, server)
-#     print('Starting RESERVATION SERVICE. Listening on port 50051.')
-#     server.add_insecure_port('[::]:50051')
-#     server.start()
-
-#     try:
-#         while True:
-#             time.sleep(86400)
-#     except KeyboardInterrupt:
-#         server.stop(0)
-
-# def sagaQueueConsumer(service):
-#     print(" [x] Awaiting SAGA reservation requests")
-#     service.channelSAGA.start_consuming()
-    
-# service = ReservationServicer()
-# x = threading.Thread(target=grpc_server, args=(service,))
-# x.start()
-
-# y = threading.Thread(target=sagaQueueConsumer, args=(service,))
-# y.start()
-# x.join()
