@@ -14,7 +14,7 @@ import geopy.geocoders
 from decimal import Decimal
 from dBUtils import DBUtils
 from reservationLogic import ReservationLogic
-from connectionEmail import ConnectionEmail
+from connectionPayment import ConnectionPayment
 import boto3
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -533,8 +533,8 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             # 3. se il pagamento è online inizia SAGA 
             if (payOnline == True):
 
-                connessione = ConnectionPayment()
-                result, errorMsg = connessione.payOnline(self.stubAccounting)
+                connessione = ConnectionPayment(self.stubAccounting)
+                result, errorMsg = connessione.payOnline(id.time, username, email, lido_id, costo, distance, budgetDifference, idCard)
                 if result == False:
                     return  grpc_pb2.response(operationResult = False,
                     errorMessage =errorMsg) 

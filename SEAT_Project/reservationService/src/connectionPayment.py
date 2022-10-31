@@ -17,7 +17,7 @@ class ConnectionPayment (Connection):
         self.prenotazione = dynamoDb.Table('prenotazione') 
 
 
-    def payOnline(self):
+    def payOnline(self, id, username, email, lido_id, costo, distance, budgetDifference, idCard):
         """Trigger the SAGA transaction: reservation -> payment -> update of user's history
 
         Returns:
@@ -30,7 +30,7 @@ class ConnectionPayment (Connection):
             return result, errorMsg
         
         # pubblica un messaggio  per triggerare il pagamento
-        request = "{}:{}:{}:{}:{}:{}:{}:{}".format (id.time,username, email, lido_id, costo, distance, budgetDifference, idCard)
+        request = "{}:{}:{}:{}:{}:{}:{}:{}".format (id,username, email, lido_id, costo, distance, budgetDifference, idCard)
         print("SENDING A PAYMENT REQUEST TO {} WITH EMAIL {}".format(username, email))
         self.publish(request, 'Pay_request')
 

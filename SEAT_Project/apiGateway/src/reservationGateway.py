@@ -9,12 +9,12 @@ import geopy.geocoders
 import ssl
 import certifi
 import datetime
+from circuitBreaker import *
 
 
 class ReservationGateway():
 
     def __init__(self):
-        # self.reservationChannel = grpc.insecure_channel("{}:50051".format("localhost"))
         self.reservationChannel = grpc.insecure_channel("{}:50051".format("reservation"))
         self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
 
@@ -40,10 +40,9 @@ class ReservationGateway():
         list = []
         list.append(grpc_pb2.dictionary(key = "username", value=details['username']))
         list.append(grpc_pb2.dictionary(key = "tipoUtente", value=details['type']))
-        list.append(grpc_pb2.dictionary(key = "email", value = details['email'] ))
+        list.append(grpc_pb2.dictionary(key = "email", value=details['email'] ))
         sessione = grpc_pb2.session(dict = list)
-
-        response = self.stubReservation.getListOfProposal(grpc_pb2.proposalRequest(
+        inputParam = grpc_pb2.proposalRequest(
             location=city,
             numRow=numRow,
             numBeachUmbrella=numUmbrella,
@@ -54,7 +53,20 @@ class ReservationGateway():
             toDate=timestamp2,
             maxPrice=prezzoMassimo,
             sessione=sessione
-        ))
+        )
+        response = circuitBreaker.getSuggestions(inputParam)
+        # response = self.stubReservation.getListOfProposal(grpc_pb2.proposalRequest(
+        #     location=city,
+        #     numRow=numRow,
+        #     numBeachUmbrella=numUmbrella,
+        #     numLettini=numLettini,
+        #     numSdraio=numSdraio,
+        #     numChair=numChair,
+        #     fromDate=timestamp1,
+        #     toDate=timestamp2,
+        #     maxPrice=prezzoMassimo,
+        #     sessione=sessione
+        # ))
 
         suggestions = []
         for offerta in response.offerta:
