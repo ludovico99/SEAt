@@ -80,6 +80,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.commit()
                 print("Payment operation has succeded")
                 request = body
+                routingKey = 'History_request'
                 
             else:
                 if len(tupleListLido) == 0:
@@ -87,14 +88,15 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 else: 
                     errorMsg = "Credit available isn't enough"
                 request = "FAILURE:{}:{}:{}:{}".format(id,username,email,errorMsg)
+                routingKey = 'Pay_response'
             
-            self.publish(request, 'History_request')
+            self.publish(request, routing_key)
 
         except Exception as e:
             print (repr(e))
             errorMsg = "Payment operation has failed"
             request = "FAILURE:{}:{}:{}:{}".format(id,username,email,errorMsg)
-            self.publish(request, 'History_request')
+            self.publish(request, 'Pay_response')
             
         finally:
             if self.sqlConn != None:

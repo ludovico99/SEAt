@@ -536,8 +536,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
                 connessione = ConnectionPayment(self.stubAccounting)
                 result, errorMsg = connessione.payOnline(id.time, username, email, lido_id, costo, distance, budgetDifference, idCard)
                 if result == False:
-                    return  grpc_pb2.response(operationResult = False,
-                    errorMessage =errorMsg) 
+                    return  grpc_pb2.response(operationResult = False, errorMessage=errorMsg) 
 
     
                 # result,errorMsg = self.establishConnectionSAGA ()

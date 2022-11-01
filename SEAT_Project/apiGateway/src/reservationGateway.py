@@ -9,7 +9,7 @@ import geopy.geocoders
 import ssl
 import certifi
 import datetime
-from circuitBreaker import *
+import circuitBreaker
 
 
 class ReservationGateway():
@@ -54,26 +54,12 @@ class ReservationGateway():
             maxPrice=prezzoMassimo,
             sessione=sessione
         )
-        response = circuitBreaker.getSuggestions(inputParam)
-        # response = self.stubReservation.getListOfProposal(grpc_pb2.proposalRequest(
-        #     location=city,
-        #     numRow=numRow,
-        #     numBeachUmbrella=numUmbrella,
-        #     numLettini=numLettini,
-        #     numSdraio=numSdraio,
-        #     numChair=numChair,
-        #     fromDate=timestamp1,
-        #     toDate=timestamp2,
-        #     maxPrice=prezzoMassimo,
-        #     sessione=sessione
-        # ))
 
-        suggestions = []
-        for offerta in response.offerta:
-            proposta = [offerta.lido_id, offerta.city, round(int(offerta.distance), 2), offerta.price, round(int(offerta.averageReview),2), offerta.index]
-            suggestions.insert(offerta.index, proposta)
+        print("chiamo il CB")
+        suggestions,msg = circuitBreaker.getSuggestions(self.stubReservation,inputParam)
+        print("il CB ha finito")
         
-        return suggestions
+        return suggestions,msg
 
 
     def getReservedSeatMatrix(self,lido_id, configurationMatrix):

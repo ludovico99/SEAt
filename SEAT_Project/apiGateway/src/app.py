@@ -120,7 +120,10 @@ def userHomepage():
             else:                    
                 details['fromDate'] = fromDate
                 details['toDate'] = toDate
-                suggestions = resG.getSuggestions(details)  
+                suggestions,msg = resG.getSuggestions(details)  
+                if len(msg)!=0:
+                    flash(msg)
+                    return redirect('/utente')
                 
         except Exception as e:
             flash("Fallimento nell'inserimento delle date")

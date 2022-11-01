@@ -14,7 +14,8 @@ class ConnectionPayment (Connection):
         self.stubAccounting = stubAccounting
         dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
         self.storiaUtente = dynamoDb.Table('storiaUtente')
-        self.prenotazione = dynamoDb.Table('prenotazione') 
+        self.prenotazione = dynamoDb.Table('prenotazione')
+        self.responseMsg = "" 
 
 
     def payOnline(self, id, username, email, lido_id, costo, distance, budgetDifference, idCard):
@@ -37,7 +38,11 @@ class ConnectionPayment (Connection):
         # si mette in attesa che la transazione finisca. Viene sbloccato dall'ultima callback
         self.channel.start_consuming()
         print("END SAGA")
-        return True, ""
+        
+        ret = True
+        if len(self.responseMsg)!=0:
+            ret = False
+        return ret, self.responseMsg
 
 
 
@@ -236,6 +241,7 @@ class ConnectionPayment (Connection):
                         ReturnValues = 'ALL_OLD'
                     )
                     print("[cancellazione prenotazione] result=", result1)  
+                
             
             
             else:   

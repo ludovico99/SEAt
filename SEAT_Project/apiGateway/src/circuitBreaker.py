@@ -1,9 +1,21 @@
-import circuitbreaker
+from circuitbreaker import circuit
 
-# incrementa il numero di failure ogni volta che c'è un errore di connessione... si può settare con errori generici. Forse è meglio?
 
-# By default, the circuit breaker stays open for 30 seconds to allow the integration point to recover. You can adjust this value with the recovery_timeout parameter.
-@circuitbreaker.circuit(failure_threshold=3, recovery_timeout=60)
-def getSuggestions(inputParam):
-    response = self.stubReservation.getListOfProposal(inputParam)
-    return response
+def onCircuitOpen(stubReservation, inputParam):
+
+    suggestions = None
+    print("[CB] CIRCUITO APERTO")
+    msg = "funzionalità richiesta al momento non disponibile"
+    return suggestions, msg
+
+
+@circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onCircuitOpen)
+def getSuggestions(stubReservation, inputParam):
+
+    print("[CB] sto chiamando il microservizio")
+    response = stubReservation.getListOfProposal(inputParam)
+    suggestions = []
+    for offerta in response.offerta:
+        proposta = [offerta.lido_id, offerta.city, round(int(offerta.distance), 2), offerta.price, round(int(offerta.averageReview),2), offerta.index]
+        suggestions.insert(offerta.index, proposta)
+    return suggestions, ""

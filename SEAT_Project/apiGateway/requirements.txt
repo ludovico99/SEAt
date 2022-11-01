@@ -4,3 +4,4 @@ grpcio-tools
 geopy
 haversine
 certifi
+circuitbreaker
