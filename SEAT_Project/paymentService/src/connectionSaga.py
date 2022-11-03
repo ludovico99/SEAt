@@ -1,10 +1,7 @@
 from connection import Connection
-from dBUtils import DBUtils
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
-from decimal import Decimal
 from connectionEmail import ConnectionEmail
-import boto3
 import uuid
 import pika
 import sqlite3
@@ -12,34 +9,7 @@ import sqlite3
 class ConnectionSaga (Connection):
     def __init__(self):
         self.sqlConn = None
-        seld.establishConnection()
-
-    def payOnline(self, id, username, email, lido_id, costo, distance, budgetDifference, idCard):
-        """Trigger the SAGA transaction: reservation -> payment -> update of user's history
-
-        Returns:
-            BOOL: True if the payment transaction succeded
-            String: error message
-        """
-        # crea una connessione
-        result,errorMsg = self.establishConnection ()
-        if result == False:
-            return result, errorMsg
-        
-        # pubblica un messaggio  per triggerare il pagamento
-        request = "{}:{}:{}:{}:{}:{}:{}:{}".format (id,username, email, lido_id, costo, distance, budgetDifference, idCard)
-        print("SENDING A PAYMENT REQUEST TO {} WITH EMAIL {}".format(username, email))
-        self.publish(request, 'Pay_request')
-
-        # si mette in attesa che la transazione finisca. Viene sbloccato dall'ultima callback
-        self.channel.start_consuming()
-        print("END SAGA")
-        
-        ret = True
-        if len(self.responseMsg)!=0:
-            ret = False
-        return ret, self.responseMsg
-
+        self.establishConnection()
 
 
     def publish(self, request, routingKey):
@@ -75,32 +45,32 @@ class ConnectionSaga (Connection):
             self.channel.queue_declare(queue="History_response")
 
             # Dichiarazione per le code delle richieste e delle risposte per DELETE ACCOUNT
-            self.channelSAGA.queue_declare(queue="Account_request")
-            self.channelSAGA.queue_declare(queue="Account_response")
+            self.channel.queue_declare(queue="Account_request")
+            self.channel.queue_declare(queue="Account_response")
 
-            self.channelSAGA.queue_declare(queue="Payment_request")
-            self.channelSAGA.queue_declare(queue="Payment_response") 
+            self.channel.queue_declare(queue="Payment_request")
+            self.channel.queue_declare(queue="Payment_response") 
             
             # quando consuma da Pay_request cerca di effettuare il pagamento
-            self.channelSAGA.basic_consume(
+            self.channel.basic_consume(
                     queue="Pay_request",
                     on_message_callback=self.onlinePaymentSAGA,
                     auto_ack=True)
             
             # quando consuma da History_response valuta se eseguire o no il rollback del PAGAMENTO
-            self.channelSAGA.basic_consume(
+            self.channel.basic_consume(
                     queue="History_response",
                     on_message_callback=self.onResponseSaga,
                     auto_ack=True)
 
             # quando consuma da Payment_request cerca di effettuare l'eliminazione della carta di credito
-            self.channelSAGA.basic_consume(
+            self.channel.basic_consume(
                     queue="Payment_request",
                     on_message_callback=self.onDeleteRequest,
                     auto_ack=True)
 
             # quando consuma da Payment_response valuta se eseguire o no il rollback della DELETE
-            self.channelSAGA.basic_consume(
+            self.channel.basic_consume(
                     queue="Payment_response",
                     on_message_callback=self.onDeleteResponse,
                     auto_ack=True)
@@ -115,6 +85,15 @@ class ConnectionSaga (Connection):
 
 
     def onlinePaymentSAGA(self, ch, method, properties, body):
+        """ CALLBACK FUNCTION: perform the payment moving credit from customer card to lido's card.
+        If the payment fails trigger the reservation's UNDO, else trigger the update of the user history.
+
+        Args:
+            ch (pika.channel.Channel): channel
+            method (pika.spec.Basic.Deliver):
+            properties (pika.spec.BasicProperties): properties associated to message consumed
+            body (bytes): message consumed
+        """
         
         print("\n ONLINE PAYMENT SAGA")
         try :
@@ -165,7 +144,7 @@ class ConnectionSaga (Connection):
                 request = "FAILURE:{}:{}:{}:{}".format(id,username,email,errorMsg)
                 routingKey = 'Pay_response'
             
-            self.publish(request, routing_key)
+            self.publish(request, routingKey)
 
         except Exception as e:
             print (repr(e))
@@ -178,6 +157,14 @@ class ConnectionSaga (Connection):
                 self.sqlConn.close()
     
     def onResponseSaga (self, ch, method, properties, body):
+        """ CALLBACK FUNCTION: evaulate (and potentially perform) the ROLLBACK of the payment.
+
+        Args:
+            ch (pika.channel.Channel): channel
+            method (pika.spec.Basic.Deliver):
+            properties (pika.spec.BasicProperties): properties associated to message consumed
+            body (bytes): message consumed
+        """
 
         try:
             response = body.decode("utf-8").split(':')
@@ -220,6 +207,14 @@ class ConnectionSaga (Connection):
                 self.sqlConn.close()
     
     def onDeleteRequest (self,ch,method,properties,body):
+        """ CALLBACK FUNCTION: try to delete the payment card.
+
+        Args:
+            ch (pika.channel.Channel): channel
+            method (pika.spec.Basic.Deliver):
+            properties (pika.spec.BasicProperties): properties associated to message consumed
+            body (bytes): message consumed
+        """
         try :
             list = None
             response = body.decode("utf-8").split(':')
@@ -260,6 +255,14 @@ class ConnectionSaga (Connection):
     
 
     def onDeleteResponse (self,ch,method,properties,body):
+        """ CALLBACK FUNCTION: evaluate (and potentially perform) the ROLLBACK of payment card's removal.
+
+        Args:
+            ch (pika.channel.Channel): channel
+            method (pika.spec.Basic.Deliver):
+            properties (pika.spec.BasicProperties): properties associated to message consumed
+            body (bytes): message consumed
+        """
         try:
             #request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in account service has succeded",list)
             response = body.decode("utf-8").split(':')

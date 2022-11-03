@@ -62,6 +62,11 @@ class ConnectionEmail (Connection):
             self.connection.close()
 
     def on_channel_open (self):
+        """ Declare the exchange
+
+        Returns:
+            BOOL: outcome of the operation
+        """
         try:
             print("CHANNEL OPEN")
             self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
@@ -74,6 +79,11 @@ class ConnectionEmail (Connection):
 
 
     def on_exchange (self):
+        """Define request and response queues
+
+        Returns:
+            BOOL: outcome of the definition, True if succeded
+        """
         try:
             print('Have exchange')
 
@@ -92,6 +102,11 @@ class ConnectionEmail (Connection):
             return False
 
     def on_bind(self):
+        """TODO
+
+        Returns:
+            BOOL: outcome of the operation
+        """
 
         try:
             self.channel.basic_consume(

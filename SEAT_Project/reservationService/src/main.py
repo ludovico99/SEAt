@@ -565,14 +565,18 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
 
     def manualReserve(self, request, context):
-        """ perform the reservation triggered by beach club on a specific seat. These seats are not associated with a 
+        """ perform the reservation triggered by beach club on a specific seat. These seats are not associated with a
         user and the beach club must insert the customer's name.
 
-        Args:
-            request (grpc_pb2.manualReservationRequest): grpc message with the details of the reservation to insert
-            context (_type_): 
 
-        Returns:
+
+       Args:
+            request (grpc_pb2.manualReservationRequest): grpc message with the details of the reservation to insert
+            context (_type_):
+
+
+
+       Returns:
             grpc_pb2.response: grpc message containing the outcome boolean and the description message
         """
         try:
@@ -581,13 +585,17 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             date = datetime.now().date()
             ids = request.ombrelloneId
             nLettini = request.numLettini
-            nSdraio= request.numSdraio 
+            nSdraio= request.numSdraio
             nChair = request.numChair
+
+
 
             print("Username:{}, lido:{}, da riservare:{}, numero lettini: {}, numero sdraio: {}, numero sedie: {}, from: {}, to: {}".format (
                     username, lido_id, ids, nLettini,nSdraio,nChair, date, date))
 
-            # 1. Cerco tutte le prenotazioni per un lido
+
+
+           # 1. Cerco tutte le prenotazioni per un lido
             data = self.db.scanDb('prenotazione', ['lidoId'], [lido_id])
             if data == None:
                 msg = "OPS ... Errore nella richiesta al database"
@@ -629,34 +637,51 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             if (totPezzi['totaleSedie'] - pezziOccupati['sedieOccupate'] - nChair < 0):
                 return  grpc_pb2.response(operationResult = False, errorMessage = "sdraio non dispnibili per {}".format(strDate))
             
-            for id in ids:
-                keyid = uuid.uuid1()
-                self.prenotazione.put_item(
-                    Item= {
-                        'prenotazioneId': int(keyid.time),
-                        'lidoId': lido_id,
-                        'userId': username,
-                        'fromDate': date.strftime("%d/%m/%Y"),
-                        'toDate': date.strftime("%d/%m/%Y"),
-                        'ombrelloneId': id,
-                        'nSdraio': int(nSdraio),
-                        'nLettini': int(nLettini),
-                        'nSedie': int(nChair),
-                        'costo': 0
-                    }
-                )
+            transactions = []
+
+
+
+           for id in ids:
+
+
+
+               keyid = uuid.uuid1()
+                put = self.db.putTransaction([['prenotazioneId','N',keyid.time],['lidoId','S',lido_id],['userId','S',username],
+                ['fromDate','S',date.strftime("%d/%m/%Y")],['toDate','S',date.strftime("%d/%m/%Y")],['ombrelloneId','S',id],
+                ['nSdraio','N', nSdraio],['nLettini','N', nLettini],['nSedie','N',nChair],['costo','N',0]],"prenotazione")
+                
+                # self.prenotazione.put_item(
+                #     Item= {
+                #         'prenotazioneId': int(keyid.time),
+                #         'lidoId': lido_id,
+                #         'userId': username,
+                #         'fromDate': date.strftime("%d/%m/%Y"),
+                #         'toDate': date.strftime("%d/%m/%Y"),
+                #         'ombrelloneId': id,
+                #         'nSdraio': int(nSdraio),
+                #         'nLettini': int(nLettini),
+                #         'nSedie': int(nChair),
+                #         'costo': 0
+                #     }
+                # )
                 # 4. se prenoto più postazioni insieme il conto dei pezzi lo metto solo in una entry del db
                 nSdraio = 0
                 nLettini = 0
                 nChair = 0
 
+
+
+               transactions.append(put)
+            
+            self.db.executeTransaction(transactions)
         except Exception as e:
             print(repr(e))
             # return grpc_pb2.response(operationResult = False, errorMessage = "Exception has occurred in manual reservation")
             return grpc_pb2.response(operationResult = False, errorMessage = repr(e))
 
-        return grpc_pb2.response(operationResult = True, errorMessage = "Manual reservation has succeded") 
-        
+
+
+       return grpc_pb2.response(operationResult = True, errorMessage = "Manual reservation has succeded")    
     
              
     # def establishConnectionEmail (self):

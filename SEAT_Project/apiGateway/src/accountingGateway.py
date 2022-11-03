@@ -16,7 +16,6 @@ def isValid(email):
 class AccountingGateway():
     
     def __init__(self):
-        #self.accountingChannel = grpc.insecure_channel("{}:50052".format("localhost"))
         self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)   
     
