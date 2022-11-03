@@ -1,7 +1,11 @@
 from circuitbreaker import circuit
+import grpc
+
+from proto import grpc_pb2
+from proto import grpc_pb2_grpc
 
 
-def onCircuitOpen(stubReservation, inputParam):
+def onCircuitOpen():
 
     suggestions = None
     print("[CB] CIRCUITO APERTO")
@@ -19,3 +23,10 @@ def getSuggestions(stubReservation, inputParam):
         proposta = [offerta.lido_id, offerta.city, round(int(offerta.distance), 2), offerta.price, round(int(offerta.averageReview),2), offerta.index]
         suggestions.insert(offerta.index, proposta)
     return suggestions, ""
+
+@circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onCircuitOpen)
+def tryConnectToAccountingService():
+    accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
+    return grpc_pb2_grpc.AccountingStub(accountingChannel)   
+   
+   

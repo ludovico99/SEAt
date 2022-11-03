@@ -641,11 +641,9 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
 
 
 
-           for id in ids:
+            for id in ids:
 
-
-
-               keyid = uuid.uuid1()
+                keyid = uuid.uuid1()
                 put = self.db.putTransaction([['prenotazioneId','N',keyid.time],['lidoId','S',lido_id],['userId','S',username],
                 ['fromDate','S',date.strftime("%d/%m/%Y")],['toDate','S',date.strftime("%d/%m/%Y")],['ombrelloneId','S',id],
                 ['nSdraio','N', nSdraio],['nLettini','N', nLettini],['nSedie','N',nChair],['costo','N',0]],"prenotazione")
@@ -668,10 +666,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
                 nSdraio = 0
                 nLettini = 0
                 nChair = 0
-
-
-
-               transactions.append(put)
+                transactions.append(put)
             
             self.db.executeTransaction(transactions)
         except Exception as e:
@@ -679,9 +674,7 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
             # return grpc_pb2.response(operationResult = False, errorMessage = "Exception has occurred in manual reservation")
             return grpc_pb2.response(operationResult = False, errorMessage = repr(e))
 
-
-
-       return grpc_pb2.response(operationResult = True, errorMessage = "Manual reservation has succeded")    
+        return grpc_pb2.response(operationResult = True, errorMessage = "Manual reservation has succeded")    
     
              
     # def establishConnectionEmail (self):

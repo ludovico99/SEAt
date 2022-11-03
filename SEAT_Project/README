@@ -30,8 +30,8 @@ sudo docker network inspect <networkId>
 sudo docker network rm  111496a97204
 sudo docker network inspect -f '{{json .Containers}}' 111496a97204 | jq '.[] | .Name + ":" + .IPv4Address'
 
-sudo docker container exec -it 9cc0c687e8fd ls 
-sudo docker container exec -it 9cc0c687e8fd  ls -a /root/.aws/credentials
+sudo docker container exec -it e9480820206c ls 
+sudo docker container exec -it e9480820206c  ls -a /root/.aws/credentials
 
 sudo docker run -it <tag>
 
