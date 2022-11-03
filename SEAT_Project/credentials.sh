@@ -2,9 +2,9 @@
 
 echo \
 "[default]
-aws_access_key_id=ASIAZSPXN3SFTYKD5QL2
-aws_secret_access_key=m7A9yw2sbnJLN87gQcj2qK+io1kbiwtnhKLDDypl
-aws_session_token=FwoGZXIvYXdzEOT//////////wEaDI+mLW6Q027Y7pqrkCLXAVh20LrSwcv+4mx9cmeoWWHoUeysOCcUsEWWtUSDMLeENiCjayZc8ME23yapXIkIpJRnxbxNB/ed8KQY3RdGpZpdumXjrYdb2zb0KGFpNGFbzYgotoKPUOzre/P2iKwlGMtA/e7YFo9Ol2jkefSsuJ4VKYVFlMP3ukkCGVoSrDdGe9Iz49sVrAqtqoKeGXxYKh9rIpzVNDMXjvf0rNRqifR1ybxHBNmWygkdLgnLfPXFQyAb5IIFZng0GU1NGbspSr1ghjOZ2mQSGulW8CobAVfw3tO60Oc5KIu8jpsGMi1vaT7PlS6Xu/IB3XYQQpSOQNmFNcoBVcTnzpIpvwT9NpUQ5TE/W/SQTNxgoxM=" > $HOME/.aws/credentials 
+aws_access_key_id=ASIA2UH6LIUUWBCFHNLH
+aws_secret_access_key=OJuGRX/R5zaSI/doLctzHI64jcXLmM/vXqCWRHTU
+aws_session_token=FwoGZXIvYXdzEOn//////////wEaDKyWt4ZKRMsn5gEv/yLSAZRq+JCJCk8ZLBYJYXE9H+9Pe+Uyv0GrqXk4airfnBdDmlMzADit0VYhg5KpNm+k170EqULnL4ygDtpvns1ZP/+K4UhhoIJXdMwTmXigoPG+FdrmuAPPWoiwc8FxMrUI4kgWtBDkuAW0sayriRlwkZDq0/f6w74kcpX6cUITGwjRNrr3A8c4CVthb8jSv9GtyRUJHLoIIPqxbVulzRUKblJ81iy8rKVMZe5VbbKNDf7Zf1NDH2i6gKJVXnEVKoFgViGcXjOmWoXmOwez1UWpaBkqISi8v4+bBjIt5FHCztirMtwTsYInWuErVpvzMfjZXBzHU1R3bXZ2tjWLCwF0GI3p1+rO1Mxc" > $HOME/.aws/credentials 
 
 cp $HOME/.aws/credentials ./accountingService/credentials
 cp $HOME/.aws/credentials ./quoteService/credentials

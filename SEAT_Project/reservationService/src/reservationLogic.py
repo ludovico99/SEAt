@@ -110,7 +110,6 @@ class ReservationLogic (object):
             if data == None:
                 msg = "Errore nella richiesta al database"
                 print(msg)
-                # return  grpc_pb2.response(operationResult = False, errorMessage = msg)
                 return None, None, None, msg
             
             if(len(data) == 0):

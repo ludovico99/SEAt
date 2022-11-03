@@ -23,8 +23,8 @@ class ConnectionEmail (Connection):
             if result == False:
                 return False
 
-            request = "{}:{}#Reservation".format (username,email)
             #INVIO DEL MESSAGGIO DI RICHIESTA
+            request = "{}:{}#Reservation".format (username,email)
             print("SENDING AN EMAIL TO {}".format(request))
             self.corr_id = str(uuid.uuid4())
             self.channel.basic_publish(
@@ -56,8 +56,14 @@ class ConnectionEmail (Connection):
         print("RESPONSE: %r:%r" % (method.routing_key, body))
         if self.connection != None and self.connection.is_open:
             self.connection.close()
+    
 
     def on_channel_open (self):
+        """ declare the exchange (type=topic) after channel creation. The exchange is called "topic_logs". 
+
+        Returns:
+            BOOL: outcome of the definition, True if succeded
+        """
         try:
             print("CHANNEL OPEN")
             self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
@@ -69,6 +75,11 @@ class ConnectionEmail (Connection):
             return False
 
     def on_exchange (self):
+        """ Define request and response queues
+
+        Returns:
+            BOOL: outcome of the definition, True if succeded
+        """
         try:
             print('Have exchange')
 
@@ -91,6 +102,11 @@ class ConnectionEmail (Connection):
             return False
 
     def on_bind(self):
+        """ define the CALLBACK FUNCTION
+
+        Returns:
+            BOOL: outcome of the definition
+        """
 
         try:
             self.channel.basic_consume(

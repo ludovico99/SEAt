@@ -13,13 +13,11 @@ class QuotesServicer(grpc_pb2_grpc.QuoteServicer):
     
     def __init__(self):
         self.errorMsg = ""
-        # self.iPAddress = "localhost"  
-
         self.db = DBUtils()
         self.logic = QuoteLogic()
 
 
-    def computeQuotes(self, quoteForm, context):            # Nuova versione  
+    def computeQuotes(self, quoteForm, context):
         """ compute the price for the requested beach club
 
         Args:
@@ -44,17 +42,10 @@ class QuotesServicer(grpc_pb2_grpc.QuoteServicer):
             return response
         
         # 2. prendere tutti i prezzi disponibili
-
-        # response = self.pricePerPiece.scan()
-        # row_data = response['Items']
-        # while 'LastEvaluatedKey' in response:
-        #     response = self.pricePerPiece.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        #     row_data.extend(response['Items'])  
-
         response = self.db.scanDb ('pricePerPiece',[],[])
 
         if response == None:
-         return  grpc_pb2.quoteResponse(quotes = grpc_pb2.quote())
+            return  grpc_pb2.quoteResponse(quotes = grpc_pb2.quote())
 
         prezzi = {}  # {lido: {pezzo:costo, ...}}  
 

@@ -7,6 +7,8 @@ class Connection(ABC):
     def __init__(self):
         self.connection = None
         self.channel = None
+    
+    
 
     def establishConnection (self):
         """ Create a new instance of the Connection Object for RabbitMQ
@@ -49,7 +51,7 @@ class Connection(ABC):
             if self.connection != None:
                 self.connection.close()
             return False
-            
+
     
     
     @abstractmethod

@@ -13,8 +13,6 @@ class ConnectionPayment (Connection):
         self.db = DBUtils()
         self.stubAccounting = stubAccounting
         dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
-        self.storiaUtente = dynamoDb.Table('storiaUtente')
-        self.prenotazione = dynamoDb.Table('prenotazione')
         self.responseMsg = "" 
 
 
@@ -179,24 +177,27 @@ class ConnectionPayment (Connection):
             
 
             # 5. aggiorna le entry nel database per le recommendation
-            expressionAttributeValues = {":val1": Decimal (int(mediaDistanza)),":val2": Decimal(int(varianzaDistanza)),":val3": Decimal(int(mediaDifferenzaBudget)),
-            ":val4": Decimal(int(varianzaDifferenzaBudget)),":val5": counter, ":val6": nRistorazione,":val7": nBar,":val8": nCampi,
-            ":val9": nAnimazione,":val10": nPalestra }
+            
+            update = self.db.updateTransaction([['userId','S',username]],[['mediaDistanza','N',mediaDistanza],['varianzaDistanza','N',varianzaDistanza],['mediaDifferenzaBudget','N',mediaDifferenzaBudget],['varianzaDifferenzaBudget','N',varianzaDifferenzaBudget],
+            ['tot','N',counter],['nRistorazione','N',nRistorazione],['nBar','N',nBar],['nCampi','N',nCampi],['nAnimazione','N',nAnimazione],['nPalestra','N',nPalestra]],"storiaUtente")
+            
         
-            self.storiaUtente.update_item (
-                Key = {
-                             'userId': username,
-                        },
-                UpdateExpression= "SET mediaDistanza= :val1, varianzaDistanza =:val2, mediaDifferenzaBudget =:val3, varianzaDifferenzaBudget =:val4, tot =:val5, nRistorazione =:val6, nBar =:val7, nCampi =:val8, nAnimazione =:val9, nPalestra =:val10",
-                ExpressionAttributeValues=expressionAttributeValues,
-                ReturnValues = "ALL_NEW",
-            )
+            response,msg = self.db.executeTransaction([update])
+
+            if response == False:
+
+                print("[Update user history]:", msg)
+                request = "FAILURE:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,msg)
+                
+                self.publish(request, 'History_response')
+
+            else :
             
-            msg = "Saga completed correctly"
-            print("[Update user history]:", msg)
-            request = "SUCCESS:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,msg)
-            
-            self.publish(request, 'History_response')
+                msg = "Saga completed correctly"
+                print("[Update user history]:", msg)
+                request = "SUCCESS:{}:{}:{}:{}:{}:{}:{}".format(id,username,email,lido_id,costo,cardId,msg)
+                
+                self.publish(request, 'History_response')
 
         except Exception as e:
             print(repr(e))
@@ -232,17 +233,14 @@ class ConnectionPayment (Connection):
                 print("ROLLBACK operation: Deleting reservation previously inserted")
                 data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])
                 print("1")
+                transactions = []
                 for i in range (0,len(data)) :
-                    result1 = self.prenotazione.delete_item (
-                        Key ={
-                            'prenotazioneId' : prenotazione_id,
-                            'ombrelloneId' : str(data[i]['ombrelloneId'])
-                            },
-                        ReturnValues = 'ALL_OLD'
-                    )
-                    print("[cancellazione prenotazione] result=", result1)  
+                    delete = self.db.deleteTrasaction([['prenotazioneId','N',prenotazione_id],['ombrelloneId','S',data[i]['ombrelloneId']]],"prenotazione")
+                    transactions.append(delete)
                 
-            
+                print(transactions)
+                response,msg = self.db.executeTransaction(transactions)
+                
             
             else:   
                 # 2. lascio alla classe connectionEmail la complessità della gestione delle code

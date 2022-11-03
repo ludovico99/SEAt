@@ -5,7 +5,6 @@ class DBUtils (object):
 
     def __init__(self):
         self.dynamoDb = boto3.resource('dynamodb', region_name='us-east-1')
-
         self.client = boto3.client('dynamodb', region_name='us-east-1')
 
 

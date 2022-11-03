@@ -16,16 +16,7 @@ from proto import grpc_pb2_grpc
 class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
     
     def __init__(self):
-
-        
-        # self.connectionEmail = None
-        self.connectionSAGA = None
-        # self.channelEmail = None
-        self.channelSAGA = None
-        # self.corr_id = None
         self.sqlConn = None
-
-        # self.establishConnectionSAGA()
         self.connessione = ConnectionSaga()
 
         try:
@@ -34,81 +25,26 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             with open("paymentService/createDB.sql","r") as f:
                 self.sqlConn.executescript(f.read())
             self.sqlConn.commit()
+
         except Exception as e:
             print(repr(e))
         finally:
             if self.sqlConn != None:
                 self.sqlConn.close()
 
-    
 
-    # def onlinePaymentSAGA(self, ch, method, properties, body):
-        
-    #     print("\n ONLINE PAYMENT SAGA")
-    #     try :
-    #         request = body.decode("utf-8").split(':')
-    #         print("REQUEST online payment: {}".format(request))
-    #         id = request [0]
-    #         username = request[1]
-    #         email = request[2]
-    #         lido_id = request[3]
-    #         costo = int(request[4])
-    #         distance = float(request[5])
-    #         budgetDifference=float(request[6])
-    #         idCard=int(request[7])
-        
-    #         print("[Il server ha ricevuto]\nUsername:{}, lido:{}, costo:{}, distanza dal luogo richiesto: {}, differenza di prezzo dal massimo richiesto: {}".format (
-    #         username, lido_id,costo,distance,budgetDifference,))
-                    
-    #         # 1. cerco le informazioni della carta selezionata
-    #         self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
-    #         items = self.sqlConn.execute('SELECT * FROM payment WHERE username=? AND id = ?',(username,idCard,)).fetchall()
-    #         if len(items) == 0:
-    #             msg = "Errore interno: non sono state trovate carte di credito corrispondenti"
-    #             print(msg)
-    #             return grpc_pb2.response(operationResult = False, errorMessage = msg)
-   
-    #         card = items[0][2]
-    #         credito = items[0][4]
-    #         print("CARTA SELEZIONATA: {}".format(card))
-
-    #         # 2. cerco la carta relativa al lido
-    #         tupleListLido = self.sqlConn.execute('SELECT * FROM payment WHERE username=?',(lido_id,)).fetchall()
-            
-            
-    #         # 3. decremento il credito del cliente e aumento quello del lido
-    #         if len(tupleListLido) != 0 and (credito>= int(costo)):
-    #             self.sqlConn.execute("UPDATE payment SET Credito = ?  WHERE username = ? AND id = ?", (credito - int(costo), username, idCard,))
-    #             self.sqlConn.execute("UPDATE payment SET Credito = ?  WHERE username = ?", (tupleListLido[0][4] + int(costo),lido_id, ))
-    #             self.sqlConn.commit()
-    #             print("Payment operation has succeded")
-    #             request = body
-    #             routingKey = 'History_request'
-                
-    #         else:
-    #             if len(tupleListLido) == 0:
-    #                 errorMsg = "Lido {} selected not exists".format(lido_id)
-    #             else: 
-    #                 errorMsg = "Credit available isn't enough"
-    #             request = "FAILURE:{}:{}:{}:{}".format(id,username,email,errorMsg)
-    #             routingKey = 'Pay_response'
-            
-    #         self.publish(request, routing_key)
-
-    #     except Exception as e:
-    #         print (repr(e))
-    #         errorMsg = "Payment operation has failed"
-    #         request = "FAILURE:{}:{}:{}:{}".format(id,username,email,errorMsg)
-    #         self.publish(request, 'Pay_response')
-            
-    #     finally:
-    #         if self.sqlConn != None:
-    #             self.sqlConn.close()
-            
-        
-        
 
     def deleteCard (self, deleteReq, context):
+        """ perform the removal of the payment card from the microservice's local db
+
+        Args:
+            deleteReq (grpc_pb2.deleteCardRequest): grpc message that specify the card owner's username and cardId
+            context (): 
+
+        Returns:
+            grpc_pb2.response: grpc message describing the outcome (operationResult, errorMessage)
+        """
+
         print("Il server ha ricevuto:")
         print("Session: {}",deleteReq)
         username = deleteReq.username
@@ -132,7 +68,17 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         response = grpc_pb2.response(operationResult = True, errorMessage = "Delete operation has succeded")
         return response
 
+
     def insertCreditCard(self, request, context):
+        """Insert new credit card in the microservice's local db
+
+        Args:
+            request (grpc_pb2.creditDetails): grpc message containg the details of the card to insert
+            context (): 
+
+        Returns:
+            grpc_pb2.response: grpc message describing the outcome (operationResult, errorMessage)
+        """
         print("Il server ha ricevuto: ")
         print("\nusername:{}, cardId:{}, cvc:{}, credito:{}".format (request.username,request.cardId, request.cvc, request.credito))
        
@@ -148,7 +94,17 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.close()
         return grpc_pb2.response(operationResult = True, errorMessage = "Insert operation has succeded")
         
+
     def showCards(self, request, context):
+        """ get the list of card associated to user in input
+
+        Args:
+            request (grpc_pb2.session): grpc message containing the description of the user to retrieve the cards
+            context (): 
+
+        Returns:
+            grpc_pb2.cardsResponse: grpc message containing the list of the cards (with details)
+        """
         print("Il server ha ricevuto:")
         print("Session: {}",request)
         username = request.dict[0].value
@@ -168,6 +124,14 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
   
 
     def lookUpInDb(self, username):
+        """utility function to query the local db and retrieve the list of the cards associated to the user
+
+        Args:
+            username (String): user that owns the cards
+
+        Returns:
+            List: _list of cards
+        """
         try :
             self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
             response = self.sqlConn.execute('SELECT * FROM payment WHERE username=?',(username,)).fetchall()
@@ -186,6 +150,15 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         return response
 
     def lookupACard(self, username, cardId):
+        """ query the local db to retrieve the information associated to a specific card (with card id) of a user
+
+        Args:
+            username (String): card's owner
+            cardId (String): card's identifier
+
+        Returns:
+            List: list with 1 element containing the requested card's details 
+        """
         try :
             self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
             response = self.sqlConn.execute('SELECT * FROM payment WHERE username=? AND cardId = ?',(username,cardId,)).fetchall()
@@ -203,321 +176,13 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.close()
         return response
 
-    # def on_open(self):
-    #     try:
-    #         print ("CONNECTION OPEN")
-    #         self.channelEmail = self.connectionEmail.channel()
-    #         return self.on_channel_open()
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if self.connectionEmail != None:
-    #             self.connectionEmail.close()
-    #         return False
-
-    # def on_channel_open (self):
-    #     try:
-    #         print("CHANNEL OPEN")
-    #         self.channelEmail.exchange_declare(exchange='topic_logs', exchange_type='topic')
-    #         return self.on_exchange()
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if self.connectionEmail != None:
-    #             self.connectionEmail.close()
-    #         return False
-
-    # def on_exchange (self):
-    #     try:
-    #         print('Have exchange')
-
-    #         #CODA PER LE RISPOSTE
-    #         self.channelEmail.queue_declare(queue="emailQueue")
-    #         self.channelEmail.queue_declare(queue='responseQueue:Payment') 
-
-    #         #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-    #         self.channelEmail.queue_bind(exchange='topic_logs', queue='responseQueue:Payment', routing_key="Payment.*")
-    #         return self.on_bind()
-
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if self.connectionEmail != None:
-    #             self.connectionEmail.close()
-    #         return False
-
-    # def on_bind(self):
-
-    #     try:
-    #         self.channelEmail.basic_consume(
-    #             queue='responseQueue:Payment',
-    #             on_message_callback=self.onResponseEmail,
-    #             auto_ack=True)
-
-    #         print("Awaiting email responses")
-    #         return True
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if self.connectionEmail != None:
-    #             self.connectionEmail.close()
-    #         return False
-
-    # def establishConnectionEmail (self):
-        # try:
-        #     amqp_url = os.environ['AMQP_URL']
-
-        #     parameters = pika.URLParameters(amqp_url)
-        #     self.connectionEmail = pika.BlockingConnection(parameters)
-            
-        #     return self.on_open()
-        
-        # except KeyboardInterrupt:
-        #     if (self.connectionEmail != None):
-        #         self.connectionEmail.close()
-       
-        # except Exception as e:
-        #     print(repr(e))
-        #     return False,"Error in establishing connections and queues"
-        # return True,"Connection and queues are correctly established "
     
-            
-
-
-    # def on_open_SAGA(self):
-    #     try:
-    #         print ("CONNECTION OPEN FOR SAGA")
-    #         self.channelSAGA = self.connectionSAGA.channel()
-    #         return self.on_channel_open_SAGA()
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if (self.connectionSAGA != None):
-    #             self.connectionSAGA.close()
-    #         return False
-            
-    # def on_channel_open_SAGA (self):
-    #     try:
-    #         print("CHANNEL CORRECTLY CREATED")
-    #     # Dichiarazione per le code delle richieste e delle risposte
-    #         self.channelSAGA.queue_declare(queue="Pay_request")
-    #         self.channelSAGA.queue_declare(queue="Pay_response") 
-        
-    #         self.channelSAGA.queue_declare(queue="History_request")
-    #         self.channelSAGA.queue_declare(queue="History_response")
-
-    #         # Dichiarazione per le code delle richieste e delle risposte
-    #         self.channelSAGA.queue_declare(queue="Account_request")
-    #         self.channelSAGA.queue_declare(queue="Account_response")
-
-    #         self.channelSAGA.queue_declare(queue="Payment_request")
-    #         self.channelSAGA.queue_declare(queue="Payment_response") 
-
-    #         self.channelSAGA.basic_consume(
-    #                 queue="Pay_request",
-    #                 on_message_callback=self.onlinePaymentSAGA,
-    #                 auto_ack=True)
-
-    #         # quando consuma da stockResponse valuta se eseguire il rollback oppure no
-    #         self.channelSAGA.basic_consume(
-    #                 queue="History_response",
-    #                 on_message_callback=self.onResponseSaga,
-    #                 auto_ack=True)
-
-
-    #         self.channelSAGA.basic_consume(
-    #                 queue="Payment_request",
-    #                 on_message_callback=self.onDeleteRequest,
-    #                 auto_ack=True)
-
-    #         self.channelSAGA.basic_consume(
-    #                 queue="Payment_response",
-    #                 on_message_callback=self.onDeleteResponse,
-    #                 auto_ack=True)
-    #         return True
-    #     except Exception as e:
-    #         print(repr(e))
-    #         if (self.connectionSAGA != None):
-    #             self.connectionSAGA.close()
-    #         return False
-
-
-    # def establishConnectionSAGA (self):
-        
-    #     try:
-    #         amqp_url = os.environ['AMQP_URL']
-
-    #         parameters = pika.URLParameters(amqp_url)
-    #         self.connectionSAGA = pika.BlockingConnection(parameters)
-            
-    #         return self.on_open_SAGA(),"Connection and queues are correctly established"  
-
-    #     except KeyboardInterrupt:
-    #         if (self.connectionSAGA != None):
-    #             self.connectionSAGA.close()
-    #     except Exception as e:
-    #         print(repr(e))
-
-    #         if (self.connectionSAGA != None):
-    #             self.connectionSAGA.close()
-
-    #         return False,"Error in establishing connection"
-         
-
-    # def onResponseEmail (self,ch,method,properties,body):
-    #     print("RESPONSE: %r:%r" % (method.routing_key, body))
-    #     if self.connectionEmail != None:
-    #         self.connectionEmail.close()
-
-
-    # def onDeleteRequest (self,ch,method,properties,body):
-    #     try :
-    #         list = None
-    #         response = body.decode("utf-8").split(':')
-    #         #request = "{}:{}".format (username,deleteReq.admin)
-    #         print("\nPayment service has received a delete request: {}".format(response))
-    #         username = response[0]
-    #         admin = response[1]
-    #         self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
-
-    #         list = self.sqlConn.execute('DELETE FROM payment WHERE username = ? returning *',(username,)).fetchall() 
-    #         print(list)
-    #         self.sqlConn.commit ()
-        
-    #         request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in payment service has succeded",list)
-
-    #         print(properties.reply_to)
-
-    #         self.channelSAGA.basic_publish(exchange='', routing_key="Account_request",
-    #         properties=pika.BasicProperties(
-    #             reply_to= "Payment_response",
-    #         ),
-    #         body=request)
-
-
-    #     except Exception as e:
-    #         print(repr(e))
-    #         request = "FAILURE:{}:{}:{}:{}".format(username,admin,"Delete in payment service has failed",list)
-                            
-    #         # self.channelSAGA.basic_publish(exchange='topic_logs_2', routing_key="Account.request.1", body=request)
-    #         self.channelSAGA.basic_publish(exchange='', routing_key="Account_request",
-    #             properties=pika.BasicProperties(
-    #                 reply_to= "Payment_response",
-    #             ),
-    #             body=request)
-
-    #     finally:
-    #         if self.sqlConn != None :
-    #             self.sqlConn.close()
-    
-    # def onDeleteResponse (self,ch,method,properties,body):
-    #     try:
-    #         #request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in account service has succeded",list)
-    #         response = body.decode("utf-8").split(':')
-    #         print("\nMessage from Payment_request: {}".format(response))
-    #         esito = response[0]
-    #         username = response[1]
-    #         admin = response[2]
-    #         msg = response[3]
-    #         list = response[4]
-
-    #         print(msg)
-    #         if esito == "FAILURE":
-    #             print("UNDO OPERATION in payment service is needed")
-    #             for i in range (0,len(list)):
-    #                 self.sqlConn.execute('INSERT INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(list[i][0],list[i][1],list[i][2],list[i][3])).fetchall()
-    #                 self.sqlConn.commit()
-
-
-    #         request = "{}:{}:{}".format(username,admin,"DELETE operation completed successfully")             
-    #         # self.channelSAGA.basic_publish(exchange='topic_logs_2', routing_key="Account.response.1", body=request)
-    #         print(properties.reply_to)
-    #         self.channelSAGA.basic_publish(exchange='', routing_key= properties.reply_to,
-    #             properties=pika.BasicProperties(
-    #                 reply_to = None
-    #             ),
-    #             body=request)
-    #     except Exception as e:
-    #         print(repr(e))
-    #     finally:
-            
-    #         if self.sqlConn != None:
-    #             self.sqlConn.close()
-
-            
-    
-    # def onResponseSaga (self, ch, method, properties, body):
-
-    #     try:
-    #         response = body.decode("utf-8").split(':')
-    #         print("\nRESPONSE Saga from History_response to Pay_response: {}".format(response))
-    #         esito = str(response[0])
-    #         id = int(response[1])
-    #         username = response[2]
-    #         email = response[3]
-    #         lido_id = response[4]
-    #         costo = int(response[5])
-    #         cardId = int(response[6])
-    #         msg = response[7]
-           
-
-    #         if (esito == "FAILURE"):
-    #             self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
-    #             print("UNDO operation: modify credito")
-    #             # 1. UNDO: aumentare il credito nella carta del cliente e diminuirlo nel lido
-    #             self.sqlConn.execute('UPDATE payment SET Credito = Credito + ? WHERE username = ? AND id = ?', (costo, username, cardId,))
-    #             self.sqlConn.execute("UPDATE payment SET Credito = Credito - ?  WHERE username = ?", (costo,lido_id,))
-
-    #             self.sqlConn.commit()
-      
-    #             # 2. pubblicare la failure per scatenare gli altri UNDO
-    #             request = "FAILURE:{}:{}:{}:{}".format(id,username,email,msg)
-                            
-    #         else :
-    #             # non serve mandare un'email ... lo facciamo al completamento della prenotazione
-    #             # print("SENDING EMAIL")
-    #             # result, errorMsg = self.sendEmail (username, email)
-    #             # print ("result:{}, ErrorMsg:{}".format(result, errorMsg))
-    #             request = "SUCCESS:{}:{}:{}:{}".format(id,username,email,msg)
-            
-    #         self.publish(request, 'Pay_response')
-
-    #     except Exception as e:
-    #         print(repr(e))
-    #     finally:
-    #         if self.sqlConn != None:
-    #             self.sqlConn.close()
-        
-    
-    
-    # def publish(self, request, routingKey):
-    #     print(request, routingKey)        
-    #     self.corr_id = str(uuid.uuid4())
-    #     self.channelSAGA.basic_publish(
-    #         exchange='',
-    #         routing_key=routingKey,
-    #         body=request)
-
-    # def sendEmail(self, username, email):
-    #     try :
-    #         result = self.establishConnectionEmail ()
-    #         if result == False:
-    #             return False, "Error in establishing connection phase"
-
-    #         request = "{}:{}#Payment".format (username,email)
-    #         #INVIO DEL MESSAGGIO DI RICHIESTA
-    #         print("SENDING AN EMAIL TO {}".format(request))
-    #         self.corr_id = str(uuid.uuid4())
-    #         self.channelEmail.basic_publish(
-    #             exchange='',
-    #             routing_key='emailQueue',
-    #             properties=pika.BasicProperties(
-    #                 correlation_id=self.corr_id,
-    #             ),
-    #             body=request)
-    #         self.connectionEmail.process_data_events(time_limit=None)
-    #     except Exception as e:
-    #         print(repr(e))
-    #         return False , "Send operation has failed"
-    #     return True, "Send operation has succeded"
-
-
 def grpc_server(service):
+    """ thread that runs the microservice's server
+
+    Args:
+        service (PaymentServicer): service to start
+    """
 
     try: 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -536,8 +201,12 @@ def grpc_server(service):
         server.stop(0)
 
 def sagaQueueConsumer(service):
+    """ thread that consume the incoming messages from queue
+
+    Args:
+        service (PaymentServicer): service that must consume the messages from the queue
+    """
     print(" [x] Awaiting SAGA payment requests")
-    # service.channelSAGA.start_consuming()
     service.connessione.channel.start_consuming()
     
 service = PaymentServicer()
@@ -548,7 +217,3 @@ x.start()
 y = threading.Thread(target=sagaQueueConsumer, args=(service,))
 y.start()
 x.join()
-
-
-
-

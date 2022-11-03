@@ -14,7 +14,6 @@ def isValid(email):
     Returns:
         BOOL: Returns True if the email is valid otherwise returns False
     """
-    
     regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
     if re.fullmatch(regex, email):
         print("Valid email")
@@ -24,16 +23,31 @@ def isValid(email):
         return False
 
 class AccountingGateway():
-    
     """
     AccountingGateway is the entry point for the interactions with the accounting service
     """
-    
     def __init__(self):
-        self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
-        self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)   
+        self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__)
+        # self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
+        # self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)  
     
     def changeConfiguration(self,numRows, numLettini, numSdraio, numChair, postiPerFila, username, tipoUtente, email):
+        """Entry point for the change configuration operation
+
+        Args:
+            numRows (int): number of rows to insert
+            numLettini (int): number of sunbeds to insert
+            numSdraio (int): number of deckchair to insert
+            numChair (int): number of chair to insert
+            postiPerFila (_type_): _description_
+            username (string): username of the user
+            tipoUtente (bool): True if the user is a beach club owner otherwise False
+            email (string): email of the user
+
+        Returns:
+            BOOL,String: Returns True if the operation has succeded. The result is associated with a string that explains the final state of the operation
+        """
+        
         if numRows < 0:
             return False, "number of rows is less than 0"
         if numSdraio < 0:
@@ -73,11 +87,11 @@ class AccountingGateway():
 
         Args:
             isAdmin (BOOL): True if the user is a beach club owner otherwise False
-            new_password (string): newest password to insert
-            new_email (string): newest email to insert
-            new_name (string): newest name to insert
-            new_place (string): newest place to insert
-            new_card (string): newest cardId to inser
+            new_password (string): new password to insert
+            new_email (string): new email to insert
+            new_name (string): new name to insert
+            new_place (string): new place to insert
+            new_card (string): new cardId to inser
             username (string): Actual username 
             old_email (string): Actual email
 
@@ -107,7 +121,7 @@ class AccountingGateway():
             return False, "An error has occurred"
     
 
-    def deleteAccount(self,username, isAdmin):
+    def deleteAccount(self,username, admin):
         """Entry point for deleteAccount operation
 
         Args:
@@ -117,7 +131,7 @@ class AccountingGateway():
         Returns:
             Bool: Returns True if the operation has succeded
         """
-        response = self.stubAccounting.deleteAccount(grpc_pb2.deleteRequest(username = username, admin = isAdmin))
+        response = self.stubAccounting.deleteAccount(grpc_pb2.deleteRequest(username = username, admin = admin))
         if response == None: 
             print ("Delete operation has failed")
             result = False
@@ -177,8 +191,8 @@ class AccountingGateway():
         """Entry point for the login operation
 
         Args:
-            username (string): _description_
-            password (string): _description_
+            username (string): username of the user who is logging in
+            password (string): password of the user who is logging in
 
         Returns:
             dict,list: Returns a dict containing the session stats and a list containing a matrix that represents the actual state of its seats (if the user is an admin)
@@ -186,20 +200,19 @@ class AccountingGateway():
         try:
             mySession = {}
             matrix = []
-
-            stub = circuitBreaker.tryConnectToAccountingService()
-            sessione = stub.login(grpc_pb2.loginRequest(username=username, password=password))
-            #La logica di gestione della connessione è gestita da grpc, se ho un errore durante l'invocazione del metodo è gRPC che lo gestisce. Il compito 
+            sessione = self.cb.login(username,password)
+            
+            #La logica di gestione della connessione è gestita da grpc, se ho un errore durante l'invocazione del metodo è gRPC che lo gestisce. Il compito
             #del circuit breaker è quello di creare una connessione con il microservizio se possibile
-
+            if len(sessione) == 0:
+                return {},[]
+                
             mySession['username'] = sessione.dict[0].value
             mySession['tipoUtente'] = sessione.dict[1].value
             mySession['email'] = sessione.dict[2].value
 
             if sessione.dict[1].value == "True":
-                
-                response = self.stubAccounting.getMatrix(grpc_pb2.reviewRequest(usernameBeachClub = username))
-                
+                response = self.cb.getMatrix(username)
                 for i in response.numInRow:
                     matrix.append(i)
                     
@@ -208,4 +221,3 @@ class AccountingGateway():
         except Exception as e:
             print(repr(e))
             return {},[]
-         

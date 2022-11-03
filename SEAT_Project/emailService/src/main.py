@@ -15,13 +15,10 @@ class EmailService (object):
 
         try:
             amqp_url = os.environ['AMQP_URL']
-
             parameters = pika.URLParameters(amqp_url)
             self.connection = pika.BlockingConnection(parameters) 
-    
             self.on_open ()
             
-
         except KeyboardInterrupt:
             if (self.connection != None):
                 self.connection.close()
@@ -30,42 +27,58 @@ class EmailService (object):
             print(repr(e))
     
 
-
     def on_open (self):
+        """create a new channel
+
+        Returns:
+            BOOL: return TRUE if the channel creation has succeded
+        """
         try:
             print ("CONNECTION OPEN")
             
             self.channel = self.connection.channel()
-            self.on_channel_open()
+            return self.on_channel_open()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
-        #self.channel.start_consuming()
-    
+            return False
+
     def on_channel_open (self):
+        """ declare the exchange (type=topic) after channel creation. The exchange is called "topic_logs". 
+
+        Returns:
+            BOOL: outcome of the definition, True if succeded
+        """
         try:
             print ("CHANNEL OPEN")
             self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            self.on_exchange ()
+            return self.on_exchange ()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
 
         
     def on_exchange(self):
+        """ Define request and response queues
+
+        Returns:
+            BOOL: outcome of the definition, True if succeded
+        """
         try :
             print('Have exchange')
             #CODA PER LE RICHIESTE PROVENIENTI DALL'ACCOUNT
             result = self.channel.queue_declare(queue='emailQueue')
             self.requestQueue = result.method.queue
 
-            self.on_queue()
+            return self.on_queue()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
 
     def on_queue(self):
         try:
@@ -75,39 +88,59 @@ class EmailService (object):
             # This helps overall throughput, but it does require us to deal
             # with the messages we have promptly.
             self.channel.basic_qos(prefetch_count=1)
-            self.on_qos()
+            return self.on_qos()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
 
 
     def on_qos(self):
         try:
             print('Set QoS')
             self.channel.queue_bind(queue=self.requestQueue, exchange=self.exchange)
-            self.on_bind()
+            return self.on_bind()
         except Exception as e:
             print(repr(e))
             if self.connection != None:
                 self.connection.close()
+            return False
             
 
 
     def on_bind(self):
-        """Callback when we have successfully bound the queue to the exchange."""
-        print('Bound')
-        self.channel.basic_consume(
+        """ define the CALLBACK FUNCTION
+
+        Returns:
+            BOOL: outcome of the definition
+        """
+        try:
+            print('Bound')
+            self.channel.basic_consume(
                 queue=self.requestQueue,
                 on_message_callback=self.onRequest,
                 auto_ack=True)
 
-        print("Starting EMAIL SERVICE. [x] Awaiting email requests")
-        self.channel.start_consuming()
-
+            print("Starting EMAIL SERVICE. [x] Awaiting email requests")
+            self.channel.start_consuming()
+            return True
+        except Exception as e:
+            print(repr(e))
+            if self.connection != None:
+                self.connection.close()
+            return False
         
 
     def onRequest(self,ch,method,props,body):
+        """CALLBACK FUNCTION that simulate the email sending
+
+        Args:
+            ch (pika.channel.Channel): channel
+            method (pika.spec.Basic.Deliver):
+            properties (pika.spec.BasicProperties): properties associated to message consumed
+            body (bytes): message consumed
+        """
         try:
             
             #TODO SEND EMAIL

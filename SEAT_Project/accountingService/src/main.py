@@ -7,6 +7,8 @@ import pika
 from dBUtils import DBUtils
 import os
 from functools import partial
+from connectionEmail import ConnectionEmail
+from connectionSaga import ConnectionSaga
 
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -17,328 +19,8 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
     def __init__(self):
         """Costructor for Accounting service class
         """
-        self.connection = None
-        self.channel = None
-        self.requestQueue = None
-        self.responseQueue = None
-
-        self.connectionSAGA = None
-        self.channelSAGA = None
-
         self.db = DBUtils()
 
-
-    def on_open_SAGA(self):
-        try:
-            print ("CONNECTION OPEN FOR SAGA")
-            self.channelSAGA = self.connectionSAGA.channel()
-            return self.on_channel_open_SAGA()
-        except Exception as e:
-            print(repr(e))
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-            return False
-
-    def on_channel_open_SAGA (self):
-        try:
-            print("CHANNEL CORRECTLY CREATED")
-        # Dichiarazione per le code delle richieste e delle risposte
-            self.channelSAGA.queue_declare(queue="Account_request")
-            self.channelSAGA.queue_declare(queue="Account_response")
-
-            self.channelSAGA.queue_declare(queue="Payment_request")
-            self.channelSAGA.queue_declare(queue="Payment_response")
-
-            self.channelSAGA.basic_consume(
-                    queue="Account_request",
-                    on_message_callback=self.onDeleteRequest,
-                    auto_ack=True)
-
-            self.channelSAGA.basic_consume(
-                    queue="Account_response",
-                    on_message_callback=self.onDeleteResponse,
-                    auto_ack=True)
-
-            return True
-        except Exception as e:
-            print(repr(e))
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-            return False
-
-    def establishConnection (self):
-        """ Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
-            for sending the email
-
-        Returns:
-            BOOL: return TRUE if the connection to RabbitMQ server has succeded
-        """
-
-
-        try:
-            amqp_url = os.environ['AMQP_URL']
-
-            parameters = pika.URLParameters(amqp_url)
-            self.connection = pika.BlockingConnection(parameters)
-            
-            return self.on_open(),"Connection and queues are correctly established"
-        
-        except KeyboardInterrupt:
-            if (self.connection != None):
-                self.connection.close()
-       
-        except Exception as e:
-            print(repr(e))
-        return False,"Error in establishing connections and queues"
-
-
-    def on_open (self):
-        try:
-            print ("CONNECTION OPEN")
-            self.channel = self.connection.channel()
-
-            return self.on_channel_open()
-
-        except Exception as e:
-            print(repr(e))
-            if self.connection != None:
-                self.connection.close()
-            return False
-    
-    def on_channel_open (self):
-        try:
-            print("CHANNEL OPEN")
-            self.channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
-            return self.on_exchange()
-        except Exception as e:
-            print(repr(e))
-            if self.connection != None:
-                self.connection.close()
-            return False
-
-    def on_exchange (self):
-        try:
-            print('Have exchange')
-
-            #CODA PER TUTTE LE RICHIESTE
-            result =self.channel.queue_declare(queue='emailQueue')
-            self.requestQueue = result.method.queue
-
-            #CODA PER LE RISPOSTE
-            result =self.channel.queue_declare(queue='responseQueue:Accounting')
-            self.responseQueue = result.method.queue
-
-            #BINDING DELLA CODA delle risposte all'exchange con routing key pari ad Accounting
-            self.channel.queue_bind(exchange='topic_logs', queue=self.responseQueue, routing_key="Accounting.*")
-            return self.on_bind()
-
-        except Exception as e:
-            print(repr(e))
-            if self.connection != None:
-                self.connection.close()
-            return False
-    
-    def on_bind(self):
-
-        try:
-            self.channel.basic_consume(
-                    queue=self.responseQueue,
-                    on_message_callback=self.onResponse,
-                    auto_ack=True)
-
-            print("Awaiting email responses")
-            return True
-        except Exception as e:
-            print(repr(e))
-            if self.connection != None:
-                self.connection.close()
-            return False
-
-    def establishConnectionSAGA (self):
-        """  Create a new instance of the Connection Object for RabbitMQ, then create a new channel and declares request and response queues
-             for implementing Saga pattern
-
-        Returns:
-            BOOL,String: Return a Boolean in order to discriminate the success or failure of the method and an error message
-        """
-      
-        try:
-            amqp_url = os.environ['AMQP_URL']
-
-            # Actually connect
-            parameters = pika.URLParameters(amqp_url)
-            self.connectionSAGA = pika.BlockingConnection(parameters)
-
-            return self.on_open_SAGA(),"Connection and queues are correctly established"
-
-        except KeyboardInterrupt:
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-        except Exception as e:
-            print(repr(e))
-
-            if (self.connectionSAGA != None):
-                self.connectionSAGA.close()
-
-        return False,"Error in establishing connection"
-
-            
-
-    def onDeleteResponse (self,ch,method,properties,body):
-        """ Callback function for messages that tell if the delete operation has succeded or not
-
-        Args:
-            ch (BlockingChannel): Instance of Blocking channel over which the communication is happening
-            method (Delivery): meta information regarding the message delivery
-            properties (BasicProperties): user-defined properties on the message
-            body (string): body of the message
-        """
-        try:
-            
-            #request = "{}:{}:{}".format(username,admin,"DELETE operation ended successfully")  
-            response = body.decode("utf-8").split(':')
-            print("\nMessage from Payment_response: {}".format(response))
-            print("ROUTING TO: {}".format(properties.reply_to))
-
-        except Exception as e:
-            print(repr(e))
-
-        finally:
-            if self.channelSAGA != None:
-                self.channelSAGA.stop_consuming()
-            if self.connectionSAGA != None and self.connectionSAGA.is_open:
-                self.connectionSAGA.close()
-
-    def onDeleteRequest (self, ch, method, properties, body):
-
-        """Callback function for messages that tell if the delete in the payment private database has succeded or not
-
-        Args:
-            ch (BlockingChannel): Instance of Blocking channel over which the communication is happening
-            method (Delivery): meta information regarding the message delivery
-            properties (BasicProperties): user-defined properties on the message
-            body (string): body of the message
-
-        """
-
-        try:
-            #request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in payment service has succeded",list)
-            response = body.decode("utf-8").split(':')
-            print("\nMessage from Payment_request queue: {}".format(response))
-            esito = str(response[0])
-            username = response[1]
-            admin = bool(response[2])
-            msg = str(response[3])
-            list = response[4]
-            self.response = True
-
-            print(properties.reply_to)
-            
-            if esito == "SUCCESS":
-                print("Payment service has completed successfully, trying to delete the remaining ones (entries)")
-
-                self.response = True
-                transactions = []
-                delete = self.db.deleteTrasaction([['username','S',username]],'utenti')
-            
-                transactions.append (delete)
-
-                if  admin == True: 
-                    delete = self.db.deleteTrasaction([['username','S',username]],'dettagliLido')
-          
-                    transactions.append (delete)
-                            
-                data = self.db.scanDb("postazioniPerFila", ['lidoId'], [username])
-
-                if data == None:
-                    return
-
-                for i in range (0,len(data)):
-                    tmp = i+1
-                    delete = self.db.deleteTrasaction([['lidoId','S',username],['numeroFila','N',tmp]],'postazioniPerFila')
-                
-                    transactions.append(delete)
-
-                delete = self.db.deleteTrasaction([['userId','S',username]],'storiaUtente')
-           
-                transactions.append (delete)
-                data = self.db.scanDb("prenotazione", ['lidoId'], [username])
-                if data == None:
-                    return
-
-                for i in range (0, len(data)):
-                    delete = self.db.deleteTrasaction([['prenotazioneId','N',data[i]['prenotazioneId']],['ombrelloneId','S',data[i]['ombrelloneId']]],'prenotazione')
-            
-                    transactions.append(delete)
-
-                data = self.db.scanDb('pricePerSeason', ['lidoId'], [username])
-                if data == None:
-                    return
-
-                for i in range (0, len(data)):
-                    delete = self.db.deleteTrasaction([['lidoId','S',data[i]['lidoId']],['season','S',data[i]['season']]],'pricePerSeason')
-                
-                    transactions.append(delete)
-
-                data = self.db.scanDb('pricePerRow', ['lidoId'], [username])
-                if data == None:
-                    return 
-
-                for i in range (0, len(data)):
-                    delete = self.db.deleteTrasaction([['lidoId','S',data[i]['lidoId']],['row','S',data[i]['row']]],'pricePerRow')
-                  
-                    transactions.append(delete)
-
-                data = self.db.scanDb('pricePerPiece', ['lidoId'], [username])
-                if data == None:
-                    return 
-
-                for i in range (0, len(data)):
-                    delete = self.db.deleteTrasaction([['lidoId','S',data[i]['lidoId']],['pezzo','S',data[i]['pezzo']]],'pricePerPiece')
-                
-                    transactions.append(delete)
-
-                data = self.db.scanDb('recensioni', ['lidoId'], [username])
-                if data == None:
-                    return 
-
-                for i in range (0, len(data)):
-                    delete = self.db.deleteTrasaction([['recensioneId','N',data[i]['recensioneId']]],'recensioni')
-                  
-                    transactions.append(delete)
-
-                print(transactions)
-                
-                response,msg = self.db.executeTransaction(transactions)
-
-                if response == False:
-                    request = "FAILURE:{}:{}:{}:{}".format(username,admin,msg,list)        
-
-                    self.channelSAGA.basic_publish(exchange='', routing_key= properties.reply_to,
-                    properties=pika.BasicProperties(
-                        reply_to= "Account_response",
-                    ),
-                  
-                    body=request)
-                    
-                request = "SUCCESS:{}:{}:{}:{}".format(username,admin,"Delete in account service has succeded",list)       
-
-                self.channelSAGA.basic_publish(exchange='', routing_key= properties.reply_to,
-                    properties=pika.BasicProperties(
-                        reply_to= "Account_response",
-                    ),
-                body=request)
-                
-
-        except Exception as e:
-            print(repr(e))
-            request = "FAILURE:{}:{}:{}:{}".format(username,admin,"Delete in account service has failed",list)
-            self.channelSAGA.basic_publish(exchange='', routing_key= properties.reply_to,
-                    properties=pika.BasicProperties(
-                        reply_to= "Account_response",
-                    ),
-                    body=request)
-            
 
     def registerAccount(self, registrationRequest, context):
         """ Register a new Account (Admin or normal user) in dynamoDB
@@ -450,7 +132,10 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                 if response == False:
                     return False, msg
     
-            result = self.sendEmail(registrationRequest.username, registrationRequest.email)  
+            # result = self.sendEmail(registrationRequest.username, registrationRequest.email)
+            connessione = ConnectionEmail()
+            result, errorMsg = connessione.sendEmail (registrationRequest.username, registrationRequest.email)
+            print ("result:{}, ErrorMsg:{}".format(result, errorMsg))  
         except grpc._channel._InactiveRpcError as e:
             print ("Undo previous write transaction...")
             del1 = self.db.deleteTrasaction([['username','S',username]],'utenti')
@@ -613,26 +298,11 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         username = deleteReq.username
         try:
 
-            res, msg = self.establishConnectionSAGA()
-            # pubblica un messaggio  per triggerare la delete
-            if res == True and self.channelSAGA != None:
-                request = "{}:{}".format (username,deleteReq.admin)
-                print("SENDING A DELETE REQUEST")
+            connessione = ConnectionSaga()
+            result, errorMsg = connessione.deleteAccount(username,deleteReq.admin)
+            if result == False:
+                return  grpc_pb2.response(operationResult = False, errorMessage=errorMsg) 
             
-                self.channelSAGA.basic_publish(
-                    exchange='', 
-                    routing_key= "Payment_request", 
-                    properties=pika.BasicProperties(
-                            reply_to= "Account_response",
-                        ),
-                    body=request
-                )
-                
-                self.channelSAGA.start_consuming()
-                
-                print("END")
-            else : return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
-
         except Exception as e:
             print(repr(e))
             return grpc_pb2.response(operationResult = False, errorMessage = "Delete has failed")
@@ -692,54 +362,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         return response
     
     
-    def onResponse (self,ch,method,properties,body):
-        """ Callback for the response message from the email service
-
-        Args:
-            ch (BlockingChannel): Instance of Blocking channel over which the communication is happening
-            method (Delivery): meta information regarding the message delivery
-            properties (BasicProperties): user-defined properties on the message
-            body (string): body of the message
-        """
-
-        print("RESPONSE: %r:%r" % (method.routing_key, body))
-        if self.connection != None and self.connection.is_open:
-            self.connection.close()
     
-
-    def sendEmail(self, username, email):
-        """Send a request to the email service in order to start sending emails
-
-        Args:
-            username (string): user's username
-            email (string): user's email
-
-        Returns:
-            BOOL,String: Return a Boolean in order to discriminate the success or failure of the function and an error message
-        """
-        try :
-            result = self.establishConnection ()
-            if result == False:
-                return False, "Error in establishing connection phase"
-
-            request = "{}:{}#Accounting".format (username,email)
-            #INVIO DEL MESSAGGIO DI RICHIESTA
-            print("SENDING AN EMAIL TO {}".format(request))
-            self.channel.basic_publish(
-                exchange='',
-                routing_key='emailQueue',
-                properties=pika.BasicProperties(
-                    reply_to=self.responseQueue,
-                ),
-                body=request)
-            print("Send operation has succeded")
-
-            self.connection.process_data_events(time_limit=None)
-        except Exception as e:
-            print(repr(e))
-            return False , "Send operation has failed"
-        return True, "Send operation has succeded"
-
     def getAllBeachClubUsername(self, emptyRequest, context):
         """return all the beach club's usernames in dynamoBD
 
@@ -801,19 +424,6 @@ try:
         time.sleep(86400)
 except KeyboardInterrupt:
     server.stop(0)
-
-# def sagaQueueConsumer(service):
-#     print(" [x] Awaiting SAGA requests")
-#     #service.channelSAGA.start_consuming()
-    
-# service = AccountingServicer()
-# x = threading.Thread(target=grpc_server, args=(service,))
-# x.start()
-
-
-# y = threading.Thread(target=sagaQueueConsumer,args=(service,))
-# y.start()
-# x.join()
 
 
 
