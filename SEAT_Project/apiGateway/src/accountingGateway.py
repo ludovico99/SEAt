@@ -204,7 +204,7 @@ class AccountingGateway():
             
             #La logica di gestione della connessione è gestita da grpc, se ho un errore durante l'invocazione del metodo è gRPC che lo gestisce. Il compito
             #del circuit breaker è quello di creare una connessione con il microservizio se possibile
-            if len(sessione) == 0:
+            if len(sessione.dict) == 0:
                 return {},[]
                 
             mySession['username'] = sessione.dict[0].value

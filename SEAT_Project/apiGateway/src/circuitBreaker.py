@@ -28,7 +28,7 @@ class MyCircuitBreaker(CircuitBreaker):
     def onLoginFailed(self,param1,param2):
         print("[CB] CIRCUITO APERTO")
         print("Login al momento non disponibile")
-        return []
+        return grpc_pb2.sessione(dict=[])
 
 
 

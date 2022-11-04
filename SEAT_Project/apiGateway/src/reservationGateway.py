@@ -15,8 +15,9 @@ import circuitBreaker
 class ReservationGateway():
 
     def __init__(self):
-        self.reservationChannel = grpc.insecure_channel("{}:50051".format("reservation"))
-        self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
+        self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__)
+        # self.reservationChannel = grpc.insecure_channel("{}:50051".format("reservation"))
+        # self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
 
     def getSuggestions (self,details):
         """entry point for the request of all the SUGGESTED PROPOSAL
@@ -65,7 +66,7 @@ class ReservationGateway():
         )
 
         print("chiamo il CB")
-        suggestions,msg = circuitBreaker.getSuggestions(self.stubReservation,inputParam)
+        suggestions,msg = self.cb.getSuggestions(self.stubReservation,inputParam)
         print("il CB ha finito")
         
         return suggestions,msg
