@@ -6,12 +6,21 @@ from proto import grpc_pb2_grpc
 class PaymentGateway():
 
     def __init__(self):
-        # self.paymentChannel = grpc.insecure_channel("{}:50055".format("localhost"))
         self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
         self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel)
 
 
     def listOfCards(self,lido_id,email,type):
+        """entry point for the retrieve of the cards associated to the user
+
+        Args:
+            lido_id (String): username
+            email (String): email
+            type (BOOL): type of user, TRUE if is admin
+
+        Returns:
+            LIst: list of cards with details
+        """
         
         list = []
         list.append(grpc_pb2.dictionary(key = "username", value=lido_id))
@@ -30,10 +39,30 @@ class PaymentGateway():
         return cards
 
     def deleteCard (self,lido_id, cardId): 
+        """entry point for card removal
+
+        Args:
+            lido_id (String): username of the card's owner
+            cardId (String): card identifier
+
+        Returns:
+            BOOL: outcome of the operation
+        """
         response = self.stubPayment.deleteCard(grpc_pb2.deleteCardRequest(username = lido_id, cardId = cardId))
         return True if response.operationResult == True else False
 
     def insertCreditCard(self,username, cardId, cvc, credito):
+        """entry point for the insertion of a new payment card. If the card exists the function modify the existing one.
+
+        Args:
+            username (String): username of the card's owner
+            cardId (String): card identifier
+            cvc (String): card's cvc
+            credito (int): amount of money to add in the card
+
+        Returns:
+            _type_: _description_
+        """
 
         if len(cardId) < 16: return False 
         elif len(cvc) < 3: return False

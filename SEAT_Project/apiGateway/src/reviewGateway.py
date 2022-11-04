@@ -7,11 +7,19 @@ import datetime
 class ReviewGateway():
 
     def __init__(self):
-        # self.reviewChannel = grpc.insecure_channel("{}:50054".format("localhost"))
         self.reviewChannel = grpc.insecure_channel("{}:50054".format("review"))
         self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel)
 
     def getReviews(self,lidoID):
+        """entry point for the retrieve of all the reviews related to the beach club in input. If lidoID is "" then
+        the function will look for all the review in the database.
+
+        Args:
+            lidoID (String): username of the beach club to look for or the empty string.
+
+        Returns:
+            List: list of reviews. Each element is a list containing: average score, review title, review comment
+        """
         getAllReviews = False
         if lidoID == "":
             getAllReviews = True
@@ -32,11 +40,30 @@ class ReviewGateway():
         return recensioni
 
     def getAverage(self,lidoID):
+        """entry point for the retrieve of the selected beach club's average score
+
+        Args:
+            lidoID (String): username of the beach club to look for
+
+        Returns:
+            float: average score
+        """
         response = self.stubReview.getAverageScoreOfBeachClub(grpc_pb2.reviewRequest(usernameBeachClub = lidoID))
         return response.average
 
 
     def postReview(self,lidoID, valutazione, commento, commento_lungo):     
+        """entry point for the insertion of a new review in the database
+
+        Args:
+            lidoID (String): username of the beach club reviewed
+            valutazione (int): number in the interval[1;5] representing the evaluation of the beach club
+            commento (String): comment title
+            commento_lungo (String): detailed comment
+
+        Returns:
+            _type_: _description_
+        """
         response = self.stubReview.review(grpc_pb2.reviewDetails(
             usernameBeachClub = lidoID, 
             star= valutazione, 
@@ -46,6 +73,16 @@ class ReviewGateway():
         return response.operationResult, response.errorMessage
     
     def analyze(self,location):
+        """entry point for the SENTIMENT ANALYSIS: retrieve the sentiment of the visitors of a place
+
+        Args:
+            location (String): city to analyze 
+
+        Returns:
+            List: list of the labels of the chart (month-year)
+            List: list of the values for the plot
+            List: each value is the total count of Positive Sentiment (or Negative, or Mixed, or Neutral)
+        """
         response = self.stubReview.sentimentAnalysis(grpc_pb2.sentimentRequest(city=location))
 
         dataset = {}

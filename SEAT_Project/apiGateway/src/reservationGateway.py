@@ -19,6 +19,15 @@ class ReservationGateway():
         self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
 
     def getSuggestions (self,details):
+        """entry point for the request of all the SUGGESTED PROPOSAL
+
+        Args:
+            details (Dict): dictionary containing the customer's wishes
+
+        Returns:
+            List: list of suggestions with relative details
+            String: message describing the outcome
+        """
 
         numRow = int(details['num_fila'])
         numUmbrella = int(details['num_ombrelloni'])
@@ -63,6 +72,15 @@ class ReservationGateway():
 
 
     def getReservedSeatMatrix(self,lido_id, configurationMatrix):
+        """entry point to retrieve the matrix that describes the reserved seats of the day.
+
+        Args:
+            lido_id (Strng): username of the beach club to look for
+            configurationMatrix (List): structure of the beach club (how many seats are there in a row?)
+
+        Returns:
+            List: list of rows (each row is a list of seats). The reserved sears are marked with the name of the customer, the remaining ones are "".
+        """
         matrix = []
 
         date = datetime.datetime.now()
@@ -90,6 +108,17 @@ class ReservationGateway():
         return matrix
 
     def reserve (self, form_detail, selected_proposal, idCard):
+        """entry point for the reservation
+
+        Args:
+            form_detail (Dict): dictionary containing the information that user sent in input
+            selected_proposal (List): list that describes the details of the proposal that customer want to accept
+            idCard (String): the user's card identifier (in order to pay)
+
+        Returns:
+            BOOL: operation result
+            String: message that describes the outcome
+        """
 
         beachClubId = selected_proposal[0]
         numRow = form_detail['num_fila']
@@ -150,6 +179,17 @@ class ReservationGateway():
         return response.operationResult, response.errorMessage
 
     def manualReservation(self,lidoId, customerName, numArray):
+        """entry point for the reservation performed by BEACH CLUB
+
+        Args:
+            lidoId (String): username of the beach club
+            customerName (String): username of the customer
+            numArray (List): array with the details. The element0 is the seatId, the remaining ones are the numer of pieces to reserve
+
+        Returns:
+            BOOL: operation result
+            String: message that describes the outcome
+        """
     
         ombrelloniId=[]
         for id in numArray[0]:
