@@ -27,9 +27,9 @@ class AccountingGateway():
     AccountingGateway is the entry point for the interactions with the accounting service
     """
     def __init__(self):
-        self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__)
-        # self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
-        # self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)  
+        self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__) #only for the login method invocation
+        self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
+        self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)  
     
     def changeConfiguration(self,numRows, numLettini, numSdraio, numChair, postiPerFila, username, tipoUtente, email):
         """Entry point for the change configuration operation

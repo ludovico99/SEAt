@@ -37,13 +37,6 @@
         name: python3
         state: present
 
-    # - name: Install Python pip
-    #   apt: name={{ item }} update_cache=true state=present force_apt_get=yes
-    #   with_items:
-    #   - python3-pip
-    #   become: true
-
-
     - name: Install docker packages
       become: yes # we need root privileges 
       remote_user: ubuntu

@@ -52,7 +52,7 @@ class ReservationGateway():
         list.append(grpc_pb2.dictionary(key = "tipoUtente", value=details['type']))
         list.append(grpc_pb2.dictionary(key = "email", value=details['email'] ))
         sessione = grpc_pb2.session(dict = list)
-        inputParam = grpc_pb2.proposalRequest(
+        proposalRequest = grpc_pb2.proposalRequest(
             location=city,
             numRow=numRow,
             numBeachUmbrella=numUmbrella,
@@ -66,7 +66,7 @@ class ReservationGateway():
         )
 
         print("chiamo il CB")
-        suggestions,msg = self.cb.getSuggestions(self.stubReservation,inputParam)
+        suggestions,msg = self.cb.getSuggestions(proposalRequest)
         print("il CB ha finito")
         
         return suggestions,msg

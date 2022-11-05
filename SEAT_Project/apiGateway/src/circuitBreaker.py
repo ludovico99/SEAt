@@ -54,9 +54,9 @@ class MyCircuitBreaker(CircuitBreaker):
     
         
     @circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onGetSuggestionOpen)
-    def getSuggestions(self,inputParam):
+    def getSuggestions(self,proposalRequest):
         print("[CB] sto chiamando il microservizio")
-        response = self.stubReservation.getListOfProposal(inputParam)
+        response = self.stubReservation.getListOfProposal(proposalRequest)
         suggestions = []
         for offerta in response.offerta:
             proposta = [offerta.lido_id, offerta.city, round(int(offerta.distance), 2), offerta.price, round(int(offerta.averageReview),2), offerta.index]
