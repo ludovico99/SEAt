@@ -16,8 +16,6 @@ class ReservationGateway():
 
     def __init__(self):
         self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__)
-        # self.reservationChannel = grpc.insecure_channel("{}:50051".format("reservation"))
-        # self.stubReservation = grpc_pb2_grpc.ReservationStub(self.reservationChannel)
 
     def getSuggestions (self,details):
         """entry point for the request of all the SUGGESTED PROPOSAL
@@ -88,10 +86,13 @@ class ReservationGateway():
         timestamp = Timestamp()
         timestamp.FromDatetime(date)
 
-        response = self.stubReservation.getReservedSeats(grpc_pb2.reservedSeatsRequest(
+        request = grpc_pb2.reservedSeatsRequest(
             beachClubId = lido_id,
             date=timestamp
-        ))
+        )
+        print("chiamo il CB")
+        reservations, msg = self.cb.getReservedSeats(request)
+        print("il CB ha finito")
 
         matrix =[]
         for lenFila_i in configurationMatrix:
@@ -101,7 +102,7 @@ class ReservationGateway():
                 reservationRow_i.append("")
             matrix.append(reservationRow_i)
         
-        for prenotazione in response.reservation:
+        for prenotazione in reservations:
             row = int(prenotazione.ombrelloneId[0]) - 1
             col = int(prenotazione.ombrelloneId[2:]) - 1
             matrix[row][col] = prenotazione.userId
@@ -160,8 +161,7 @@ class ReservationGateway():
 
 
         budgetDifference= float(form_detail['price']) - float(selected_proposal[3])
-        
-        response = self.stubReservation.reserve( grpc_pb2.reservationRequest(
+        request = grpc_pb2.reservationRequest(
                 beachClubId = beachClubId,
                 numRow=int(numRow),
                 numUmbrella=int(numUmbrella),
@@ -176,8 +176,10 @@ class ReservationGateway():
                 distance=float(distance),
                 budgetDifference=float(budgetDifference),
                 idCard=int(idCard)
-        ))
-        return response.operationResult, response.errorMessage
+        )
+        
+        response, msg = self.cb.reserve(request)
+        return response, msg
 
     def manualReservation(self,lidoId, customerName, numArray):
         """entry point for the reservation performed by BEACH CLUB
@@ -197,12 +199,13 @@ class ReservationGateway():
             new_id = "{}x{}".format(id[0],id[1])
             ombrelloniId.append(new_id)
 
-        response = self.stubReservation.manualReserve(grpc_pb2.manualReservationRequest(
+        request = grpc_pb2.manualReservationRequest(
                 beachClubId = lidoId,
                 customer = customerName,
                 ombrelloneId  = ombrelloniId,
                 numLettini = numArray[1],
                 numSdraio = numArray[2],
                 numChair = numArray[3] 
-        ))
-        return response.operationResult, response.errorMessage
+        )
+        response, msg = self.cb.manualReserve(request)
+        return response, msg
