@@ -6,8 +6,25 @@ from proto import grpc_pb2_grpc
 class PaymentGateway():
 
     def __init__(self):
-        self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
-        self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel)
+        
+        self.rr = 0
+        self.number_instances = ...
+        self.channels = []
+        self.channels.append(grpc.insecure_channel("{}:50055".format("payment_1")))
+        self.channels.append(grpc.insecure_channel("{}:50055".format("payment_2")))
+        # self.channels.append(grpc.insecure_channel("{}:50057".format("payment")))
+        # self.channels.append(grpc.insecure_channel("{}:50058".format("payment")))
+        # self.channels.append(grpc.insecure_channel("{}:50059".format("payment")))
+        # self.channels.append(grpc.insecure_channel("{}:50060".format("payment")))
+        
+        self.stubs = []
+        for ch in self.channels:
+            self.stubs.append(grpc_pb2_grpc.PaymentStub(ch))
+        print("calling the start of the queue stuff")
+        self.stubs[0].startConsume(grpc_pb2.empty())
+        
+        # self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
+        # self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel)
 
 
     def listOfCards(self,lido_id,email,type):
@@ -27,7 +44,8 @@ class PaymentGateway():
         list.append(grpc_pb2.dictionary(key = "tipoUtente", value=type))
         list.append(grpc_pb2.dictionary(key = "email", value = email))
         sessione = grpc_pb2.session(dict = list)
-        response = self.stubPayment.showCards(sessione)
+        # response = self.stubPayment.showCards(sessione)
+        response = self.stubs[1].showCards(sessione)
         cards = []
         for i in response.cards:
             card = []
@@ -48,7 +66,8 @@ class PaymentGateway():
         Returns:
             BOOL: outcome of the operation
         """
-        response = self.stubPayment.deleteCard(grpc_pb2.deleteCardRequest(username = lido_id, cardId = cardId))
+        # response = self.stubPayment.deleteCard(grpc_pb2.deleteCardRequest(username = lido_id, cardId = cardId))
+        response = self.stubs[0].deleteCard(grpc_pb2.deleteCardRequest(username = lido_id, cardId = cardId))
         return True if response.operationResult == True else False
 
     def insertCreditCard(self,username, cardId, cvc, credito):
@@ -69,6 +88,7 @@ class PaymentGateway():
         elif int(credito) < 0: return False
 
 
-        response = self.stubPayment.insertCreditCard(grpc_pb2.creditDetails(username =username,
+        # response = self.stubPayment.insertCreditCard(grpc_pb2.creditDetails(username =username,
+        response = self.stubs[0].insertCreditCard(grpc_pb2.creditDetails(username =username,
             cardId = cardId, cvc = int(cvc),credito = credito))
         return True if response.operationResult == True else False

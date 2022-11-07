@@ -100,6 +100,7 @@ deploy_gallery.yaml
 
 
 MICROSERVICES PORTS:
+50056 <-- serviceRegistry
 50055 <-- paymentService
 50054 <-- reviewService
 50053 <--- quoteService

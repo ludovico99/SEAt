@@ -791,6 +791,16 @@ class PaymentStub(object):
                 request_serializer=proto_dot_grpc__pb2.session.SerializeToString,
                 response_deserializer=proto_dot_grpc__pb2.cardsResponse.FromString,
                 )
+        self.startConsume = channel.unary_unary(
+                '/proto.Payment/startConsume',
+                request_serializer=proto_dot_grpc__pb2.empty.SerializeToString,
+                response_deserializer=proto_dot_grpc__pb2.empty.FromString,
+                )
+        self.updateRequest = channel.unary_unary(
+                '/proto.Payment/updateRequest',
+                request_serializer=proto_dot_grpc__pb2.updateReq.SerializeToString,
+                response_deserializer=proto_dot_grpc__pb2.response.FromString,
+                )
 
 
 class PaymentServicer(object):
@@ -816,6 +826,18 @@ class PaymentServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def startConsume(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def updateRequest(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PaymentServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -833,6 +855,16 @@ def add_PaymentServicer_to_server(servicer, server):
                     servicer.showCards,
                     request_deserializer=proto_dot_grpc__pb2.session.FromString,
                     response_serializer=proto_dot_grpc__pb2.cardsResponse.SerializeToString,
+            ),
+            'startConsume': grpc.unary_unary_rpc_method_handler(
+                    servicer.startConsume,
+                    request_deserializer=proto_dot_grpc__pb2.empty.FromString,
+                    response_serializer=proto_dot_grpc__pb2.empty.SerializeToString,
+            ),
+            'updateRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.updateRequest,
+                    request_deserializer=proto_dot_grpc__pb2.updateReq.FromString,
+                    response_serializer=proto_dot_grpc__pb2.response.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -894,5 +926,103 @@ class Payment(object):
         return grpc.experimental.unary_unary(request, target, '/proto.Payment/showCards',
             proto_dot_grpc__pb2.session.SerializeToString,
             proto_dot_grpc__pb2.cardsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def startConsume(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/proto.Payment/startConsume',
+            proto_dot_grpc__pb2.empty.SerializeToString,
+            proto_dot_grpc__pb2.empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def updateRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/proto.Payment/updateRequest',
+            proto_dot_grpc__pb2.updateReq.SerializeToString,
+            proto_dot_grpc__pb2.response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class ServiceRegistryStub(object):
+    """------------ Service Registry Service ---------------
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.getPortAndIp = channel.unary_unary(
+                '/proto.ServiceRegistry/getPortAndIp',
+                request_serializer=proto_dot_grpc__pb2.registryRequest.SerializeToString,
+                response_deserializer=proto_dot_grpc__pb2.registryResponse.FromString,
+                )
+
+
+class ServiceRegistryServicer(object):
+    """------------ Service Registry Service ---------------
+    """
+
+    def getPortAndIp(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ServiceRegistryServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'getPortAndIp': grpc.unary_unary_rpc_method_handler(
+                    servicer.getPortAndIp,
+                    request_deserializer=proto_dot_grpc__pb2.registryRequest.FromString,
+                    response_serializer=proto_dot_grpc__pb2.registryResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'proto.ServiceRegistry', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class ServiceRegistry(object):
+    """------------ Service Registry Service ---------------
+    """
+
+    @staticmethod
+    def getPortAndIp(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/proto.ServiceRegistry/getPortAndIp',
+            proto_dot_grpc__pb2.registryRequest.SerializeToString,
+            proto_dot_grpc__pb2.registryResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

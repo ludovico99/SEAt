@@ -1,0 +1,9 @@
+
+CREATE TABLE IF NOT EXISTS payment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(32) NOT NULL,
+    ip_Addr VARCHAR(12) NOT NULL,
+    port CHAR (5) NOT NULL
+   
+   UNIQUE(username)
+);

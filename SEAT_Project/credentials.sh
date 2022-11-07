@@ -10,3 +10,4 @@ cp $HOME/.aws/credentials ./accountingService/credentials
 cp $HOME/.aws/credentials ./quoteService/credentials
 cp $HOME/.aws/credentials ./reservationService/credentials
 cp $HOME/.aws/credentials ./reviewService/credentials
+cp $HOME/.aws/credentials ./serviceRegistry/credentials

@@ -263,6 +263,20 @@ service Payment {
     rpc deleteCard (deleteCardRequest) returns (response);
     rpc insertCreditCard(creditDetails) returns (response);
     rpc showCards (session) returns (cardsResponse);
+    rpc startConsume(empty)returns(empty);
+    rpc updateRequest(updateReq)returns(response);
+}
+
+message updateReq {
+    repeated operation o = 1;
+}
+
+message operation {
+    string op = 1;
+    string username = 2;
+    string cardId = 3;
+    int32 cvc = 4;
+    int32 credito = 5;
 }
 
 message deleteCardRequest {
@@ -286,4 +300,19 @@ message cardDetails {
     int32 credito = 2;
     int32 cvc = 3;
     int32 id = 4;
+}
+
+// ------------ Service Registry Service ---------------
+service ServiceRegistry {
+    rpc getPortAndIp (registryRequest) returns (registryResponse);
+}
+    message registryRequest {
+    string serviceName = 1;
+    
+}
+
+message registryResponse {
+    string serviceName = 1;
+    string ip = 2;
+    string port = 3; 
 }

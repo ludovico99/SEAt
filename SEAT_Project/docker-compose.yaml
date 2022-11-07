@@ -50,16 +50,36 @@ services:
     depends_on:
       - accounting
       - rabbitmq
+
+  # serviceRegistry:
+  #     build: ./serviceRegistry
+  #     environment:
+  #       AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=15'
+  #     volumes:
+  #     - ./serviceRegistry/src:/home/serviceRegistry
+  
    
 
-  payment: 
+  payment_1: 
     build: ./paymentService
     environment:
       AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
     volumes:
       - ./paymentService/src:/home/paymentService
     ports:
-      - "50055:50055"
+      - "50055-50056:50055"
+    depends_on:
+      - accounting
+      - rabbitmq
+  
+  payment_2: 
+    build: ./paymentService
+    environment:
+      AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
+    volumes:
+      - ./paymentService/src:/home/paymentService
+    ports:
+      - "50055-50056:50055"
     depends_on:
       - accounting
       - rabbitmq
