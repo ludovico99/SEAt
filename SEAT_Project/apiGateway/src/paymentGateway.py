@@ -10,6 +10,7 @@ class PaymentGateway():
         self.rr = 0
         self.number_instances = ...
         self.channels = []
+        
         self.channels.append(grpc.insecure_channel("{}:50055".format("payment_1")))
         self.channels.append(grpc.insecure_channel("{}:50055".format("payment_2")))
         # self.channels.append(grpc.insecure_channel("{}:50057".format("payment")))

@@ -33,6 +33,9 @@ sudo docker network inspect -f '{{json .Containers}}' 111496a97204 | jq '.[] | .
 sudo docker container exec -it 9cc0c687e8fd ls 
 sudo docker container exec -it 9cc0c687e8fd  ls -a /root/.aws/credentials
 
+sudo docker image prune --filter="dangling=true"
+sudo docker-compose up --scale payment=2 --build
+
 sudo docker run -it <tag>
 
 COMANDI RABBITMQ:

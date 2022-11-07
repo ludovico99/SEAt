@@ -2,6 +2,8 @@ from concurrent import futures
 from datetime import datetime
 import time
 import grpc
+import boto3
+import socket
 
 from dBUtils import DBUtils
 from quoteLogic import QuoteLogic
@@ -15,6 +17,51 @@ class QuotesServicer(grpc_pb2_grpc.QuoteServicer):
         self.errorMsg = ""
         self.db = DBUtils()
         self.logic = QuoteLogic()
+
+        self.port = "50053"
+        result = self.notifyServiceRegistry(self.port)
+        if result == False:
+            print("The notification to the service registry has failed. The Accounting service should be unavailable")
+
+    def notifyServiceRegistry (self,port):
+        """Send a notification about its port number
+
+        Args:
+            port (string): port number of the accounting service
+
+        Returns:
+            BOOL: Return True if the message has been sent correctly
+        """
+        
+        try:
+            queue_name = "service_registry_queue"
+            sqs = boto3.client('sqs',region_name='us-east-1')
+            ipAddr = socket.gethostbyname(socket.gethostname())
+            response = sqs.send_message(
+            QueueUrl= queue_name,
+            DelaySeconds=10,
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service notification'
+                },
+                'Author': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service'
+                },
+                
+            },
+            MessageBody=(
+                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+            )
+        )
+
+            print(response['MessageId'])
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            return False
 
 
     def computeQuotes(self, quoteForm, context):
@@ -162,11 +209,11 @@ class QuotesServicer(grpc_pb2_grpc.QuoteServicer):
 
 
 
-
+service = QuotesServicer()
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-grpc_pb2_grpc.add_QuoteServicer_to_server(QuotesServicer(), server)
-print('Starting QUOTE SERVICE. Listening on port 50053.')
-server.add_insecure_port('[::]:50053')
+grpc_pb2_grpc.add_QuoteServicer_to_server(service, server)
+print('Starting QUOTE SERVICE. Listening on port {}.'.format(service.port))
+server.add_insecure_port('[::]:{}'.format(service.port))
 server.start()
 
 try:

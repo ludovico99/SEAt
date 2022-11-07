@@ -7,12 +7,57 @@ from datetime import datetime
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
 from dBUtils import DBUtils
+import socket
 
 class ReviewServicer(grpc_pb2_grpc.ReviewServicer):
     
     def __init__(self):
         self.db = DBUtils()
+        self.port = "50054"
+        result = self.notifyServiceRegistry(self.port)
+        if result == False:
+            print("The notification to the service registry has failed. The Accounting service should be unavailable")
 
+    def notifyServiceRegistry (self,port):
+        """Send a notification about its port number
+
+        Args:
+            port (string): port number of the accounting service
+
+        Returns:
+            BOOL: Return True if the message has been sent correctly
+        """
+        
+        try:
+            queue_name = "service_registry_queue"
+            sqs = boto3.client('sqs',region_name='us-east-1')
+            ipAddr = socket.gethostbyname(socket.gethostname())
+            response = sqs.send_message(
+            QueueUrl= queue_name,
+            DelaySeconds=10,
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service notification'
+                },
+                'Author': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service'
+                },
+                
+            },
+            MessageBody=(
+                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+            )
+        )
+
+            print(response['MessageId'])
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            return False
+        
 
     def review(self, reviewDetails, context):
         """ Insert a review in the DynamoDB database
@@ -169,11 +214,11 @@ class ReviewServicer(grpc_pb2_grpc.ReviewServicer):
 
 
     
-
+service = ReviewServicer()
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-grpc_pb2_grpc.add_ReviewServicer_to_server(ReviewServicer(), server)
-print('Starting REVIEW SERVICE. Listening on port 50054.')
-server.add_insecure_port('[::]:50054')
+grpc_pb2_grpc.add_ReviewServicer_to_server(service, server)
+print('Starting REVIEW SERVICE. Listening on port {}.'.format(service.port))
+server.add_insecure_port('[::]:{}'.format(service.port))
 server.start()
 
 try:

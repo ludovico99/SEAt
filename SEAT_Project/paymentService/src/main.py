@@ -7,6 +7,7 @@ import uuid
 import sqlite3
 import threading
 import socket
+import boto3
 from connectionSaga import ConnectionSaga
 
 
@@ -15,22 +16,72 @@ from proto import grpc_pb2_grpc
 
 class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
+    def __init__(self):
+
         self.sqlConn = None
         self.connessione = None
         self.slaves = []
 
         try:
-            self.sqlConn = sqlite3.connect('paymentService/src/paymentService.db')
+            self.db_path = '{}/paymentService.db'.format(os.path.dirname(__file__))
+            self.sqlConn = sqlite3.connect(self.db_path)
             
-            with open("paymentService/src/createDB.sql","r") as f:
-                self.sqlConn.executescript(f.read())
-            self.sqlConn.commit()
+            if self.sqlConn != None:
+                with open("{}/createDB.sql".format(os.path.dirname(__file__)),"r") as f:
+                    self.sqlConn.executescript(f.read())
+                self.sqlConn.commit()
+            self.port = "50055"
+            result = self.notifyServiceRegistry(self.port)
+            if result == False:
+                print("The notification to the service registry has failed. The Accounting service should be unavailable")
 
         except Exception as e:
             print(repr(e))
         finally:
             if self.sqlConn != None:
                 self.sqlConn.close()
+
+    
+
+    def notifyServiceRegistry (self,port):
+        """Send a notification about its port number
+
+        Args:
+            port (string): port number of the accounting service
+
+        Returns:
+            BOOL: Return True if the message has been sent correctly
+        """
+        
+        try:
+            queue_name = "service_registry_queue"
+            sqs = boto3.client('sqs',region_name='us-east-1')
+            ipAddr = socket.gethostbyname(socket.gethostname())
+            response = sqs.send_message(
+            QueueUrl= queue_name,
+            DelaySeconds=10,
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service notification'
+                },
+                'Author': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service'
+                },
+                
+            },
+            MessageBody=(
+                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+            )
+        )
+
+            print(response['MessageId'])
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            return False
 
 
 
@@ -51,7 +102,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         cardId = deleteReq.cardId
         items = self.lookupACard (username, cardId)
         try:
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+            self.sqlConn = sqlite3.connect(self.db_path)
             if  items == None:
                 print("\nNon esistono carte di credito da eliminare")
                 return grpc_pb2.response(operationResult = False, errorMessage = "There are no credit card to delete")
@@ -83,7 +134,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         print("\nusername:{}, cardId:{}, cvc:{}, credito:{}".format (request.username,request.cardId, request.cvc, request.credito))
        
         try :
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+            self.sqlConn = sqlite3.connect(self.db_path)
             result = self.sqlConn.execute('INSERT OR REPLACE INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(request.username,request.cardId, request.cvc, request.credito))
             self.sqlConn.commit()
         except Exception as e:
@@ -133,7 +184,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             List: _list of cards
         """
         try :
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+            self.sqlConn = sqlite3.connect(self.db_path)
             response = self.sqlConn.execute('SELECT * FROM payment WHERE username=?',(username,)).fetchall()
             print(response)     
             if len(response) == 0:
@@ -160,7 +211,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             List: list with 1 element containing the requested card's details 
         """
         try :
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+            self.sqlConn = sqlite3.connect(self.db_path)
             response = self.sqlConn.execute('SELECT * FROM payment WHERE username=? AND cardId = ?',(username,cardId,)).fetchall()
             print(response)     
             if len(response) == 0:
@@ -187,7 +238,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         """
         try:
             response = []
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+            self.sqlConn = sqlite3.connect(self.db_path)
 
             for updateRequest in request.o:
                 op = updateRequest.op
@@ -201,16 +252,16 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                     # elimina la entry specificata
                     res = self.deleteCard(grpc_pb2.deleteCardRequest(username = username, cardId = cardId), context)
                 
-                else if op == "INSERT":
+                elif op == "INSERT":
                     # inserisce/aggiorna la entry specificata
                     res = self.insertCreditCard(grpc_pb2.creditDetails(username=username, cardId=cardId, cvc=cvc,credito=credito))
                 
-                else if op == "ADD":
+                elif op == "ADD":
                     # aggiunge il credito specificato
                     self.sqlConn.execute("UPDATE payment SET Credito = Credito + ?  WHERE username = ?", (credito , username, ))
                     self.sqlConn.commit()
 
-                else if op == "SUB":
+                elif op == "SUB":
                     # decrementa il credito specificato
                     self.sqlConn.execute("UPDATE payment SET Credito = Credito - ?  WHERE username = ? AND id = ?", (credito, username, cardId,))
                     self.sqlConn.commit()
@@ -263,8 +314,8 @@ def grpc_server(service):
     try: 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         grpc_pb2_grpc.add_PaymentServicer_to_server(service, server)
-        print('Starting PAYMENT SERVICE. Listening on port 50055.')
-        server.add_insecure_port('[::]:50055')
+        print('Starting PAYMENT SERVICE. Listening on port {}.'.format(service.port))
+        server.add_insecure_port('[::]:{}'.format(service.port))
         server.start()
     except Exception as e:
         print(repr(e))

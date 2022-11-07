@@ -4,11 +4,13 @@ import time
 import grpc
 import uuid
 import pika
+import boto3
 from dBUtils import DBUtils
 import os
 from functools import partial
 from connectionEmail import ConnectionEmail
 from connectionSaga import ConnectionSaga
+import socket
 
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -20,6 +22,50 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         """Costructor for Accounting service class
         """
         self.db = DBUtils()
+        self.port = "50052"
+        result = self.notifyServiceRegistry(self.port)
+        if result == False:
+            print("The notification to the service registry has failed. The Accounting service should be unavailable")
+
+    def notifyServiceRegistry (self,port):
+        """Send a notification about its port number
+
+        Args:
+            port (string): port number of the accounting service
+
+        Returns:
+            BOOL: Return True if the message has been sent correctly
+        """
+        
+        try:
+            queue_name = "service_registry_queue"
+            sqs = boto3.client('sqs',region_name='us-east-1')
+            ipAddr = socket.gethostbyname(socket.gethostname())
+            response = sqs.send_message(
+            QueueUrl= queue_name,
+            DelaySeconds=10,
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service notification'
+                },
+                'Author': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service'
+                },
+                
+            },
+            MessageBody=(
+                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+            )
+        )
+
+            #print(response['MessageId'])
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            return False
 
 
     def registerAccount(self, registrationRequest, context):
@@ -57,7 +103,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         Returns:
             grpc_pb2.session: GRPC auto-generated session message that contains the credentials if the user has been successfully logged in the system
         """
-
+        
         
         print("Il server ha ricevuto:")
         print(loginRequest.username, loginRequest.password)
@@ -416,8 +462,8 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
 service = AccountingServicer()
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 grpc_pb2_grpc.add_AccountingServicer_to_server(service, server)
-print('Starting ACCOUNTING SERVICE. Listening on port 50052.')
-server.add_insecure_port('[::]:50052')
+print('Starting ACCOUNTING SERVICE. Listening on port {}.'.format(service.port))
+server.add_insecure_port('[::]:{}'.format(service.port))
 server.start()
 try:
     while True:

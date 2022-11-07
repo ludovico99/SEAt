@@ -22,6 +22,7 @@ services:
       FLASK_ENV: development
     depends_on:
       - accounting
+      - service_registry
     
 
     # networks:
@@ -40,6 +41,7 @@ services:
       - "50052:50052"
     depends_on:
       - rabbitmq
+      - service_registry
 
   email:
     build: ./emailService
@@ -51,16 +53,14 @@ services:
       - accounting
       - rabbitmq
 
-  # serviceRegistry:
-  #     build: ./serviceRegistry
-  #     environment:
-  #       AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=15'
-  #     volumes:
-  #     - ./serviceRegistry/src:/home/serviceRegistry
+  service_registry:
+      build: ./serviceRegistry
+      volumes:
+      - ./serviceRegistry/src:/home/serviceRegistry
   
    
 
-  payment_1: 
+  payment: 
     build: ./paymentService
     environment:
       AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
@@ -71,18 +71,28 @@ services:
     depends_on:
       - accounting
       - rabbitmq
+      - service_registry
+
+
+  # payment_2:
+  #   <<: *payment # <- this is a merge (<<) with an alias (*name-me)
+  #   # keys below merge notation override those that declared under anchor
+  #   # so this:
+  #   ports:
+  #   - "50056:50055"
+  #   # replaces default 'ports' (the whole key)
   
-  payment_2: 
-    build: ./paymentService
-    environment:
-      AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
-    volumes:
-      - ./paymentService/src:/home/paymentService
-    ports:
-      - "50055-50056:50055"
-    depends_on:
-      - accounting
-      - rabbitmq
+  # payment_2: 
+  #   build: ./paymentService
+  #   environment:
+  #     AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
+  #   volumes:
+  #     - ./paymentService/src:/home/paymentService
+  #   ports:
+  #     - "50055-50056:50055"
+  #   depends_on:
+  #     - accounting
+  #     - rabbitmq
 
   quote: 
     build: ./quoteService
@@ -92,6 +102,7 @@ services:
       - "50053:50053"
     depends_on:
       - accounting
+      - service_registry
 
 
   reservation: 
@@ -105,6 +116,7 @@ services:
     depends_on:
       - accounting
       - rabbitmq
+      - service_registry
 
   review: 
     build: ./reviewService
@@ -114,15 +126,6 @@ services:
       - "50054:50054"
     depends_on:
       - accounting
+      - service_registry
 
-    # networks:
-    #   static-network:
-    #     ipv4_address: 172.24.0.3
-
-# networks:
-#   static-network:
-#     ipam:
-#       config:
-#         - subnet: 172.24.0.0/16
-            #docker-compose v3+ do not use ip_range
           

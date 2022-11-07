@@ -33,6 +33,16 @@ output "tables" {
   
 }
 
+data "external" "get_queue" {
+  program = ["python3","createQueue.py"]
+
+}
+
+output "queue" {
+  value = data.external.get_queue.result
+  
+}
+
 output "instance_public_ip" {
   #value =["${aws_instance.SEAt.*.public_ip}"] <-- per piu istanze EC2
   value ="${aws_instance.SEAt.*.public_ip[0]}"

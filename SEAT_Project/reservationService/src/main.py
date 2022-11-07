@@ -17,6 +17,7 @@ import pika
 import uuid
 import ssl
 import os
+import socket
 
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
@@ -29,6 +30,51 @@ class ReservationServicer(grpc_pb2_grpc.ReservationServicer):
         self.logic = ReservationLogic()      
         accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting = grpc_pb2_grpc.AccountingStub(accountingChannel)
+
+        self.port = "50051"
+        result = self.notifyServiceRegistry(self.port)
+        if result == False:
+            print("The notification to the service registry has failed. The Accounting service should be unavailable")
+
+    def notifyServiceRegistry (self,port):
+        """Send a notification about its port number
+
+        Args:
+            port (string): port number of the accounting service
+
+        Returns:
+            BOOL: Return True if the message has been sent correctly
+        """
+        
+        try:
+            queue_name = "service_registry_queue"
+            sqs = boto3.client('sqs',region_name='us-east-1')
+            ipAddr = socket.gethostbyname(socket.gethostname())
+            response = sqs.send_message(
+            QueueUrl= queue_name,
+            DelaySeconds=10,
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service notification'
+                },
+                'Author': {
+                    'DataType': 'String',
+                    'StringValue': 'Accounting service'
+                },
+                
+            },
+            MessageBody=(
+                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+            )
+        )
+
+            print(response['MessageId'])
+            return True
+
+        except Exception as e:
+            print(repr(e))
+            return False
         
     
     def getReservedSeats(self, request, context):
