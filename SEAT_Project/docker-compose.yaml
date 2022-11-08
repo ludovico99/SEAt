@@ -25,10 +25,6 @@ services:
       - payment
       - service_registry
     
-
-    # networks:
-    #   static-network:
-    #     ipv4_address: 172.24.0.2
   
   accounting:
     build: ./accountingService
@@ -55,8 +51,10 @@ services:
       - rabbitmq
 
   service_registry:
-      build: ./serviceRegistry
-      volumes:
+    build: ./serviceRegistry
+    ports:
+      - "50057:50057"
+    volumes:
       - ./serviceRegistry/src:/home/serviceRegistry
   
    

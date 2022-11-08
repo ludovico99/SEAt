@@ -33,11 +33,20 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
             if self.sqlConn != None:
                 self.sqlConn.close()
 
+    def getPortAndIp(self,request,context):
+        try :
+            self.sqlConn = sqlite3.connect(self.db_path)
+            response = self.sqlConn.execute('SELECT * FROM serviceRegistry WHERE serviceName=?',(request.serviceName,)).fetchall()
+            return grpc_pb2.registryResponse (serviceName = response[0][1],ip =response[0][2], port =response[0][3])
+        except Exception as e:
+            print(repr(e))
+            return grpc_pb2.registryResponse (serviceName = "all",ip ="0.0.0.0", port = "0")
+
     def receiveMessage (self):
         # Receive message from SQS queue
         try:
             while (True):
-                time.sleep(1)
+                time.sleep(0.5)
                 response = self.sqs.receive_message(
                     QueueUrl=self.queue_name,
                     AttributeNames=[
@@ -48,7 +57,7 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
                         'All'
                     ],
                     VisibilityTimeout=0,
-                    WaitTimeSeconds=20
+                    WaitTimeSeconds=15
                 )
 
                 if len(response) > 1:
@@ -56,12 +65,10 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
                     body = response['Messages'][0]['Body']
                     print(body)
                     token = str(body).split(':')
-                    print(token)
                     port = token[1].split(',')[0]
                     ip = token[2].split(',')[0]
                     service_name = token[3][:-1]
-                    print("service name : {}, ip: {}, port: {}".format(service_name,ip,port))
-
+                   
                     receipt_handle = message['ReceiptHandle']
 
                     # Delete received message from queue
@@ -73,7 +80,7 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
 
                     try :
                         self.sqlConn = sqlite3.connect(self.db_path)
-                        result = self.sqlConn.execute('INSERT OR REPLACE INTO payment (username,ip_Addr,port) values (?,?,?)',(service_name,ip, port))
+                        result = self.sqlConn.execute('INSERT OR REPLACE INTO serviceRegistry (serviceName,ip_Addr,port) values (?,?,?)',(service_name,ip, port))
                         self.sqlConn.commit()
                     except Exception as e:
                         print(repr(e))
@@ -94,8 +101,8 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 grpc_pb2_grpc.add_ServiceRegistryServicer_to_server(ServiceRegistryServicer(), server)
-print('Starting SERVICE REGISTRY. Listening on port 50056.')
-server.add_insecure_port('[::]:50056')
+print('Starting SERVICE REGISTRY. Listening on port 50057.')
+server.add_insecure_port('[::]:50057')
 server.start()
 
 try:

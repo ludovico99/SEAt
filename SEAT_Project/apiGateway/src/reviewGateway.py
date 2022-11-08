@@ -2,13 +2,33 @@ import grpc
 
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
+import time
 import datetime
 
 class ReviewGateway():
 
     def __init__(self):
-        self.reviewChannel = grpc.insecure_channel("{}:50054".format("review"))
-        self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel)
+        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch) 
+        while (True):
+            
+            try:  
+                response = self.stubServiceRegistry.getPortAndIp(grpc_pb2.registryRequest(serviceName= "ReviewServicer"))
+                break
+            except Exception as e:
+
+                time.sleep(5)
+
+        if response.port == "0":
+            print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
+            self.reviewChannel = grpc.insecure_channel("{}:{}".format("review","50054"))
+            self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel) 
+
+
+        else :
+            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
+            self.reviewChannel = grpc.insecure_channel("{}:{}".format("review",response.port))
+            self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel) 
 
     def getReviews(self,lidoID):
         """entry point for the retrieve of all the reviews related to the beach club in input. If lidoID is "" then

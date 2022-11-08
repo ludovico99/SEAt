@@ -27,6 +27,8 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         if result == False:
             print("The notification to the service registry has failed. The Accounting service should be unavailable")
 
+        
+
     def notifyServiceRegistry (self,port):
         """Send a notification about its port number
 

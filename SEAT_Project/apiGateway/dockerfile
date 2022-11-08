@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM python:3.7-alpine
 WORKDIR /home
-ENV FLASK_APP=app.py
-#RUN apk add --no-cache gcc musl-dev linux-headers
+ENV FLASK_DEBUG=app.py
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 COPY src apiGateway

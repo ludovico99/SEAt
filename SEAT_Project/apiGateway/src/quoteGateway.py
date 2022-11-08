@@ -1,13 +1,31 @@
 import grpc
-
+import time
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
 
 class QuoteGateway():
 
     def __init__(self):
-        self.quoteChannel = grpc.insecure_channel("{}:50053".format("quote"))
-        self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel)
+        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch) 
+        while (True):
+            try:  
+                response = self.stubServiceRegistry.getPortAndIp(grpc_pb2.registryRequest(serviceName= "QuotesServicer"))
+                break
+            except Exception as e:
+
+                time.sleep(5)
+
+        if response.port == "0":
+            print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
+            self.quoteChannel = grpc.insecure_channel("{}:{}".format("quote","50053"))
+            self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel) 
+
+
+        else :
+            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
+            self.quoteChannel = grpc.insecure_channel("{}:{}".format("quote",response.port))
+            self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel) 
 
     def modifyPrice(self,priceOmbrellone, priceSdraio, priceLettino, priceSedia, incrPrimeFile, incrAltaStagione, incrBassaStagione, incrMediaStagione, username):
         """_entry point to modify prices of the beach club that are seen by users

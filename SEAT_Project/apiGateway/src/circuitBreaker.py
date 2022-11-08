@@ -17,12 +17,7 @@ class MyCircuitBreaker(CircuitBreaker):
             self.tryConnectionToAccountingService()
         if className == reservationGateway.ReservationGateway.__name__:
             self.tryConnectionToReservationService()
-        if className == quoteGateway.QuoteGateway.__name__:
-            self.tryConnectionToQuoteService()
-        if className == paymentGateway.PaymentGateway.__name__:
-            self.tryConnectionToPaymentService()
-        if className == reviewGateway.ReviewGateway.__name__:
-            self.tryConnectionToReviewService()
+
 
 
     
@@ -111,27 +106,6 @@ class MyCircuitBreaker(CircuitBreaker):
     def tryConnectionToAccountingService(self):
         self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
         self.stubAccounting=grpc_pb2_grpc.AccountingStub(self.accountingChannel)
-
-
-    @circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onConnectionNotEstablished)
-    def tryConnectionToQuoteService(self):
-        self.quoteChannel = grpc.insecure_channel("{}:50053".format("quote"))
-        self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel)
-
-
-
-    @circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onConnectionNotEstablished)
-    def tryConnectionToReviewService(self):
-        self.reviewChannel = grpc.insecure_channel("{}:50054".format("review"))
-        self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel)
-
-
-
-    @circuit(failure_threshold=1, recovery_timeout=60, fallback_function=onConnectionNotEstablished)
-    def tryConnectionToPaymentService(self):
-        self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
-        self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel) 
-    
 
 
 

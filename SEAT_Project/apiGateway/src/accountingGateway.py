@@ -1,3 +1,4 @@
+import time
 import grpc
 
 from proto import grpc_pb2
@@ -28,8 +29,27 @@ class AccountingGateway():
     """
     def __init__(self):
         self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__) #only for the login method invocation
-        self.accountingChannel = grpc.insecure_channel("{}:50052".format("accounting"))
-        self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.accountingChannel)  
+        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch) 
+        while (True):
+            try:  
+                response = self.stubServiceRegistry.getPortAndIp(grpc_pb2.registryRequest(serviceName= "AccountingServicer"))
+                break
+            except Exception as e:
+                time.sleep(5)
+
+        if response.port == "0":
+            print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
+            self.channelAccounting = grpc.insecure_channel("{}:{}".format("accounting","50052"))
+            self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.channelAccounting) 
+
+
+        else :
+            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
+            self.channelAccounting = grpc.insecure_channel("{}:{}".format("accounting",response.port))
+            self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.channelAccounting) 
+
+ 
     
     def changeConfiguration(self,numRows, numLettini, numSdraio, numChair, postiPerFila, username, tipoUtente, email):
         """Entry point for the change configuration operation

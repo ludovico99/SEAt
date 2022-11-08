@@ -1,5 +1,5 @@
 import grpc
-
+import time
 from proto import grpc_pb2
 from proto import grpc_pb2_grpc
 
@@ -11,12 +11,28 @@ class PaymentGateway():
         self.number_instances = ...
         self.channels = []
         
-        self.channels.append(grpc.insecure_channel("{}:50055".format("seat_project_payment_1")))
-        self.channels.append(grpc.insecure_channel("{}:50055".format("seat_project_payment_2")))
-        # self.channels.append(grpc.insecure_channel("{}:50057".format("payment")))
-        # self.channels.append(grpc.insecure_channel("{}:50058".format("payment")))
-        # self.channels.append(grpc.insecure_channel("{}:50059".format("payment")))
-        # self.channels.append(grpc.insecure_channel("{}:50060".format("payment")))
+        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch)
+
+        while (True):
+
+            try:  
+                response = self.stubServiceRegistry.getPortAndIp(grpc_pb2.registryRequest(serviceName= "PaymentServicer"))
+                break
+            except Exception as e:
+
+                time.sleep(5)
+
+        if response.port == "0":
+            print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
+            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1","50055")))
+            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2","50055")))
+
+
+        else :
+            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
+            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1",response.port)))
+            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2",response.port)))
         
         self.stubs = []
         for ch in self.channels:

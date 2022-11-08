@@ -226,9 +226,9 @@ class ConnectionPayment (Connection):
             email = response[3]
             msg = response[4] 
             
-            self.responseMsg = msg
+           
             if (esito != "SUCCESS"):
-
+                self.responseMsg = msg
                 # 1. fare il rollback dell'inserimento della prenotazione
                 print("ROLLBACK operation: Deleting reservation previously inserted")
                 data = self.db.scanDb('prenotazione', ['prenotazioneId'], [prenotazione_id])

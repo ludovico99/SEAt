@@ -290,8 +290,9 @@ class ConnectionSaga (Connection):
                 # aggiornare le repliche se l'operazione ha avuto successo
                 for stub in self.slaves:
                     todo = []
-                    for i in range (0,len(list)):
-                        todo.append(grpc_pb2.operation(op="DELETE", username=list[i][0], cardId=list[i][1], cvc=int(list[i][2]), credito=int(list[i][2])))
+                    if len(list)>0:
+                        for i in range (0,len(list)):
+                            todo.append(grpc_pb2.operation(op="DELETE", username=list[i][0], cardId=list[i][1], cvc=int(list[i][2]), credito=int(list[i][3])))
                     
                     res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
                     print("ho aggiornato la replica secondaria")
