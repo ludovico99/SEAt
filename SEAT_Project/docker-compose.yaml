@@ -22,6 +22,7 @@ services:
       FLASK_ENV: development
     depends_on:
       - accounting
+      - payment
       - service_registry
     
 
@@ -72,7 +73,6 @@ services:
       - accounting
       - rabbitmq
       - service_registry
-
 
   # payment_2:
   #   <<: *payment # <- this is a merge (<<) with an alias (*name-me)

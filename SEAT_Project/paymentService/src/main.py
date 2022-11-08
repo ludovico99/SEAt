@@ -324,12 +324,12 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
         Returns:
             grpc_pb2.empty: empty grpc message
         """
-        self.connessione = ConnectionSaga()
+        
         y = threading.Thread(target=self.sagaQueueConsumer, args=(self.connessione,))
         y.start()
         ch = grpc.insecure_channel("{}:50055".format("payment_2"))
         self.slaves.append(grpc_pb2_grpc.PaymentStub(ch))
-
+        self.connessione = ConnectionSaga(self.slaves)
         
         return grpc_pb2.empty()
 

@@ -11,8 +11,8 @@ class PaymentGateway():
         self.number_instances = ...
         self.channels = []
         
-        self.channels.append(grpc.insecure_channel("{}:50055".format("payment_1")))
-        self.channels.append(grpc.insecure_channel("{}:50055".format("payment_2")))
+        self.channels.append(grpc.insecure_channel("{}:50055".format("seat_project_payment_1")))
+        self.channels.append(grpc.insecure_channel("{}:50055".format("seat_project_payment_2")))
         # self.channels.append(grpc.insecure_channel("{}:50057".format("payment")))
         # self.channels.append(grpc.insecure_channel("{}:50058".format("payment")))
         # self.channels.append(grpc.insecure_channel("{}:50059".format("payment")))
@@ -46,6 +46,7 @@ class PaymentGateway():
         list.append(grpc_pb2.dictionary(key = "email", value = email))
         sessione = grpc_pb2.session(dict = list)
         # response = self.stubPayment.showCards(sessione)
+        print("sto leggendo dallo slave")
         response = self.stubs[1].showCards(sessione)
         cards = []
         for i in response.cards:

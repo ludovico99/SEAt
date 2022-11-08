@@ -1,0 +1,14 @@
+[PROBLEMA 1]
+    Non so perchè ma un'operazione che invoco all'inizio su un'istanza di pagamento viene stampata due volte (anche una semplice print)
+
+
+[PROBLEMA 2]
+    HO ORGANIZZATO IL CODICE IN MODO DA AVERE
+    -> SCRITTURE SU REPLICA PRIMARIA
+    -> LETTURE SU REPLICA SECONDARIA
+
+    MA ...
+    Il database della replica secondaria viene aggiornato anche se non lo faccio io esplicitamente. Perchè? Potrebbe essere:
+        -> che, essendo le immagini dei container uguali, condividano il database di default!
+
+compilare com: sudo docker-compose up --scale payment=2 --build (mi raccomando il --build)
