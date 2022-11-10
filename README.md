@@ -9,11 +9,11 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 1) Installare AWS cli sulla macchina host:
 
-sudo apt install awscli
+    1) sudo apt install awscli
 
     Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
     
-aws configure 
+    2) aws configure 
     Per Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
     ![AWS details](/immagini/AWS_details.png)
     Viene creato il file seguente ~/.aws/credentials. 
@@ -29,19 +29,16 @@ aws configure
 
 2) E' necessario installare entrambi i tools (tutorial per ubuntu/debian):
 
- Terraform: 
+ --> Terraform: 
 
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+ 1) curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+ 2) sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+ 3) sudo apt install terraform
 
-sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+ --> Ansible:
 
-sudo apt install terraform
-
- Ansible:
-
-python3 -m pip install --user ansible
-
-python3 -m pip install --upgrade --user ansible
+ 1) python3 -m pip install --user ansible
+ 2) python3 -m pip install --upgrade --user ansible
 
  3) E' necessario modificare i files /SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
 
