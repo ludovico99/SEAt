@@ -9,11 +9,14 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 1) Installare AWS cli sulla macchina host:
 
-    1) sudo apt install awscli
+    1) Installare AWS CLI:
 
-    Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
+        sudo apt install awscli
+
+    2) Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
     
-    2) aws configure 
+        aws configure 
+
     Per Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
     ![AWS details](/immagini/AWS_details.png)
     Viene creato il file seguente ~/.aws/credentials. 
@@ -31,29 +34,29 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
     --> Terraform: 
 
-    curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-    sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-    sudo apt install terraform
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt install terraform
 
     --> Ansible:
 
-    python3 -m pip install --user ansible
-    python3 -m pip install --upgrade --user ansible
+        python3 -m pip install --user ansible
+        python3 -m pip install --upgrade --user ansible
 
  3) E' necessario modificare i files /SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
 
- --> Per terraform è possibile modificare il tipo di istanza da creare, l'ami dell'istanza EC2 (Utilizzare distribuzioni Ubuntu/Debian)  da creare, l'id del security group (Deve necessariamente garantire l'ingresso a traffico HTTP e SSH proveniente dalla macchina dalla quale si intende fare il deploy. In uscita è importante che venga garantito il passaggio a traffico HTTP) e il nome della chiave privata (creata in precedenza all'interno del servizio EC2. Vedere https://docs.aws.amazon.com/it_it/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
+    --> Per terraform è possibile modificare il tipo di istanza da creare, l'ami dell'istanza EC2 (Utilizzare distribuzioni Ubuntu/Debian)  da creare, l'id del security group (Deve necessariamente garantire l'ingresso a traffico HTTP e SSH proveniente dalla macchina dalla quale si intende fare il deploy. In uscita è importante che venga garantito il passaggio a traffico HTTP) e il nome della chiave privata (creata in precedenza all'interno del servizio EC2. Vedere https://docs.aws.amazon.com/it_it/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
 
- --> Per ansible è possibile fare la copia dell'application directory decommentando le righe da 13 a 17 e modificando la variabile local_app_dir. 
+    --> Per ansible è possibile fare la copia dell'application directory decommentando le righe da 13 a 17 e modificando la variabile local_app_dir. 
 
- 4) In /SEAT_Project/startup.sh è necessario specificare il path assoluto della chiave privata .pem e della directory del progetto
+ 4) In /SEAT_Project/startup.sh è necessario specificare il path assoluto della chiave privata .pem e della directory del progetto:
+    bash /SEAT_Project/startup.sh
 
  5) Fare la stessa cosa del punto 4 nel file /SEAT_Project/deploy.sh
 
 [ESECUZIONE]:
 
-1) Eseguire lo script bash /SEAT_Project/startup.sh per istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS. 
-    --> Il comando precedente porta alla creazione/modifica del file hosts.ini con l'indirizzo ip della macchina EC2 appena creata. Questo file verrà utilizzato da ansible.
+1) Eseguire lo script bash /SEAT_Project/startup.sh per istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS --> Il comando precedente porta alla creazione/modifica del file hosts.ini con l'indirizzo ip della macchina EC2 appena creata. Questo file verrà utilizzato da ansible.
 
 2) Aspettare che l'istanza EC2 sia in esecuzione 
 
