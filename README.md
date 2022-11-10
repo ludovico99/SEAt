@@ -3,7 +3,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 [INSTALLAZIONE]:
 
-    1) Eseguire il clone del repository github: git clone https://github.com/ludovico99/SEAt.git
+1) Eseguire il clone del repository github: git clone https://github.com/ludovico99/SEAt.git
 
 [CONFIGURAZIONE]:
 
