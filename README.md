@@ -11,11 +11,11 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
     1) Installare AWS CLI:
 
-        sudo apt install awscli
+            sudo apt install awscli
 
     2) Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
     
-        aws configure 
+            aws configure 
 
     Per Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
     ![AWS details](/immagini/AWS_details.png)
@@ -57,13 +57,13 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 1) Eseguire lo script bash /SEAT_Project/startup.sh per istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS --> Il comando precedente porta alla creazione/modifica del file hosts.ini con l'indirizzo ip della macchina EC2 appena creata. Questo file verrà utilizzato da ansible.
 
-      bash /SEAT_Project/startup.sh
+        bash /SEAT_Project/startup.sh
 
 2) Aspettare che l'istanza EC2 sia in esecuzione 
 
 3) Eseguire lo script /SEAT_Project/deploy.sh per eseguire la copia della directory attraverso protocollo scp e per eseguire il deploy in ansible. Attraverso ansible verrà installato docker sulla macchina remota e l'applicazione verrà installata come systemd service.
 
-      bash /SEAT_Project/deploy.sh
+        bash /SEAT_Project/deploy.sh
 
 4) Arrestare l'istanza EC2 e riavviarla. 
 
