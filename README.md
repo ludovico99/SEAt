@@ -2,16 +2,18 @@
 How-to basato su distribuzione Linux Ubuntu/Debian
 
 [INSTALLAZIONE]:
+
     1) Eseguire il clone del repository github: git clone https://github.com/ludovico99/SEAt.git
 
 [CONFIGURAZIONE]:
+
 1) Installare AWS cli sulla macchina host:
 
-    1) --> sudo apt install awscli
+    1) $ sudo apt install awscli
 
     Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
     
-    2) --> aws configure 
+    2) $ aws configure 
     Per Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
     ![AWS details](/immagini/AWS_details.png)
     Viene creato il file seguente ~/.aws/credentials. 
@@ -21,22 +23,22 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 Il deploy dell'applicazione è basato sull'utilizzo  di:
 
-    1) terraform: E' un open-source IaC tool software che consente di creare in modo sicuro e predicibile, cambiare e migliorare l'infrastruttura, nel nostro caso EC2. E' basato sulla dichiarazione di risorse AWS. 
+    --> terraform: E' un open-source IaC tool software che consente di creare in modo sicuro e predicibile, cambiare e migliorare l'infrastruttura, nel nostro caso EC2. E' basato sulla dichiarazione di risorse AWS. 
 
-    2) ansible: E' un software libero che consente di automatizzare le procedure di configurazione e gestione sui sistemi unix-like e Windows
+    --> ansible: E' un software libero che consente di automatizzare le procedure di configurazione e gestione sui sistemi unix-like e Windows
 
 2) E' necessario installare entrambi i tools (tutorial per ubuntu/debian):
 
  Terraform: 
 
- 1) curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
- 2) sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
- 3) sudo apt install terraform
+ 1)$ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+ 2)$ sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+ 3)$ sudo apt install terraform
 
  Ansible:
 
- 1) python3 -m pip install --user ansible
- 2) python3 -m pip install --upgrade --user ansible
+ 1)$ python3 -m pip install --user ansible
+ 2)$ python3 -m pip install --upgrade --user ansible
 
  3) E' necessario modificare i files /SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
 
