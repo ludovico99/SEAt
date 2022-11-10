@@ -29,16 +29,16 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 2) E' necessario installare entrambi i tools (tutorial per ubuntu/debian):
 
- --> Terraform: 
+    --> Terraform: 
 
- 1) curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
- 2) sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
- 3) sudo apt install terraform
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+    sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    sudo apt install terraform
 
- --> Ansible:
+    --> Ansible:
 
- 1) python3 -m pip install --user ansible
- 2) python3 -m pip install --upgrade --user ansible
+    python3 -m pip install --user ansible
+    python3 -m pip install --upgrade --user ansible
 
  3) E' necessario modificare i files /SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
 
