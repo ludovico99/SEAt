@@ -5,7 +5,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 1) Eseguire il clone del repository github:
 
-                git clone https://github.com/ludovico99/SEAt.git
+        git clone https://github.com/ludovico99/SEAt.git
 
 [CONFIGURAZIONE]:
 
