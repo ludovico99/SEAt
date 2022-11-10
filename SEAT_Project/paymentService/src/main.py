@@ -112,13 +112,12 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
 
 
             # aggiorna le altre repliche
-            for stub in self.slaves:
-                todo = []
+            # for stub in self.slaves:
+            #     todo = []
                 
-                todo.append(grpc_pb2.operation(op="DELETE", username=username, cardId=cardId, cvc=0, credito=0))
-                res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
-                print("ho aggiornato la replica secondaria")
-                #TODO se res è falso??? magari memorizza le info e fai l'undo dell'operazione
+            #     todo.append(grpc_pb2.operation(op="DELETE", username=username, cardId=cardId, cvc=0, credito=0))
+            #     res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
+            #     print("ho aggiornato la replica secondaria")
 
 
         except Exception as e:
@@ -149,14 +148,13 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             result = self.sqlConn.execute('INSERT OR REPLACE INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(request.username,request.cardId, request.cvc, request.credito))
             self.sqlConn.commit()
 
-            # aggiorna le altre repliche
-            for stub in self.slaves:
-                todo = []
+            # # aggiorna le altre repliche
+            # for stub in self.slaves:
+            #     todo = []
                 
-                todo.append(grpc_pb2.operation(op="INSERT", username=request.username, cardId=request.cardId, cvc=request.cvc, credito=request.credito))
-                res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
-                print("ho aggiornato la replica secondaria")
-                #TODO se res è falso??? magari memorizza le info e fai l'undo dell'operazione
+            #     todo.append(grpc_pb2.operation(op="INSERT", username=request.username, cardId=request.cardId, cvc=request.cvc, credito=request.credito))
+            #     res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
+            #     print("ho aggiornato la replica secondaria")
 
 
         except Exception as e:
@@ -249,70 +247,70 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
                 self.sqlConn.close()
         return response
     
-    def updateRequest(self, request, context):
-        """function to update the secondary replicas'DB in order to provide consistency
+    # def updateRequest(self, request, context):
+    #     """function to update the secondary replicas'DB in order to provide consistency
 
-        Args:
-            request (grpc_pb2.updateReq): grpc message with the details of the operation to perform
-            context (): 
-        Returns:
-            grpc_pb2.response: grpc message describing the outcome (operationResult, errorMessage)
-        """
-        try:
-            response = []
-            self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
+    #     Args:
+    #         request (grpc_pb2.updateReq): grpc message with the details of the operation to perform
+    #         context (): 
+    #     Returns:
+    #         grpc_pb2.response: grpc message describing the outcome (operationResult, errorMessage)
+    #     """
+    #     try:
+    #         response = []
+    #         self.sqlConn = sqlite3.connect('paymentService/paymentService.db')
 
-            for updateRequest in request.o:
-                op = updateRequest.op
-                username =  updateRequest.username
-                cardId = updateRequest.cardId
-                cvc = updateRequest.cvc
-                credito = updateRequest.credito
-                res = None
+    #         for updateRequest in request.o:
+    #             op = updateRequest.op
+    #             username =  updateRequest.username
+    #             cardId = updateRequest.cardId
+    #             cvc = updateRequest.cvc
+    #             credito = updateRequest.credito
+    #             res = None
 
-                if op == "DELETE":
-                    # elimina la entry specificata
-                    self.sqlConn.execute('DELETE FROM payment WHERE username = ? AND cardId = ?',(username,cardId,)).fetchall() 
-                    self.sqlConn.commit ()
-                    res = True
-                    print("replica secondaria modificata")
+    #             if op == "DELETE":
+    #                 # elimina la entry specificata
+    #                 self.sqlConn.execute('DELETE FROM payment WHERE username = ? AND cardId = ?',(username,cardId,)).fetchall() 
+    #                 self.sqlConn.commit ()
+    #                 res = True
+    #                 print("replica secondaria modificata")
                 
-                elif op == "INSERT":
-                    # inserisce/aggiorna la entry specificata 
-                    self.sqlConn.execute('INSERT OR REPLACE INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(username, cardId, cvc, credito))
-                    self.sqlConn.commit()
-                    res = True
-                    print("replica secondaria modificata")
+    #             elif op == "INSERT":
+    #                 # inserisce/aggiorna la entry specificata 
+    #                 self.sqlConn.execute('INSERT OR REPLACE INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(username, cardId, cvc, credito))
+    #                 self.sqlConn.commit()
+    #                 res = True
+    #                 print("replica secondaria modificata")
                 
-                elif op == "ADD":
-                    # aggiunge il credito specificato
-                    self.sqlConn.execute("UPDATE payment SET Credito = Credito + ?  WHERE username = ?", (credito , username, ))
-                    self.sqlConn.commit()
-                    res = True
-                    print("replica secondaria modificata")
+    #             elif op == "ADD":
+    #                 # aggiunge il credito specificato
+    #                 self.sqlConn.execute("UPDATE payment SET Credito = Credito + ?  WHERE username = ?", (credito , username, ))
+    #                 self.sqlConn.commit()
+    #                 res = True
+    #                 print("replica secondaria modificata")
 
-                elif op == "SUB":
-                    # decrementa il credito specificato
-                    self.sqlConn.execute("UPDATE payment SET Credito = Credito - ?  WHERE username = ? AND id = ?", (credito, username, cardId,))
-                    self.sqlConn.commit()
-                    res = True
-                    print("replica secondaria modificata")
-                else:
-                    return grpc_pb2.response(operationResult = False, errorMessage = "GRPC MALFORMED")        
+    #             elif op == "SUB":
+    #                 # decrementa il credito specificato
+    #                 self.sqlConn.execute("UPDATE payment SET Credito = Credito - ?  WHERE username = ? AND id = ?", (credito, username, cardId,))
+    #                 self.sqlConn.commit()
+    #                 res = True
+    #                 print("replica secondaria modificata")
+    #             else:
+    #                 return grpc_pb2.response(operationResult = False, errorMessage = "GRPC MALFORMED")        
                 
-                response.append(res)
+    #             response.append(res)
             
-            # scandisci le entry di response, se anche una non va a buon fine torna False
-            for r in response:
-                if r == False:
-                    return grpc_pb2.response(operationResult = False, errorMessage = "Operation Failed")
-            return grpc_pb2.response(operationResult = True, errorMessage = "Insert operation has succeded")
+    #         # scandisci le entry di response, se anche una non va a buon fine torna False
+    #         for r in response:
+    #             if r == False:
+    #                 return grpc_pb2.response(operationResult = False, errorMessage = "Operation Failed")
+    #         return grpc_pb2.response(operationResult = True, errorMessage = "Insert operation has succeded")
 
-        except:
-            return grpc_pb2.response(operationResult = False, errorMessage = "ERROR IN UPDATING THE REPLICAS")
-        finally:
-            if self.sqlConn != None:
-                self.sqlConn.close()        
+    #     except:
+    #         return grpc_pb2.response(operationResult = False, errorMessage = "ERROR IN UPDATING THE REPLICAS")
+    #     finally:
+    #         if self.sqlConn != None:
+    #             self.sqlConn.close()        
     
             
     def startConsume(self, empty, context):
@@ -365,20 +363,7 @@ def grpc_server(service):
         print(repr(e))
         server.stop(0)
 
-# def sagaQueueConsumer(service):
-#     """ thread that consume the incoming messages from queue
-
-#     Args:
-#         service (PaymentServicer): service that must consume the messages from the queue
-#     """
-#     print(" [x] Awaiting SAGA payment requests")
-#     service.connessione.channel.start_consuming()
     
 service = PaymentServicer()
 x = threading.Thread(target=grpc_server, args=(service,))
 x.start()
-
-
-# y = threading.Thread(target=sagaQueueConsumer, args=(service,))
-# y.start()
-# x.join()

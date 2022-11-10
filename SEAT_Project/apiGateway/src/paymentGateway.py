@@ -8,7 +8,7 @@ class PaymentGateway():
     def __init__(self):
         
         self.rr = 0
-        self.number_instances = ...
+        self.number_instances = 2
         self.channels = []
         
         self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
@@ -61,9 +61,11 @@ class PaymentGateway():
         list.append(grpc_pb2.dictionary(key = "tipoUtente", value=type))
         list.append(grpc_pb2.dictionary(key = "email", value = email))
         sessione = grpc_pb2.session(dict = list)
+        
         # response = self.stubPayment.showCards(sessione)
         print("sto leggendo dallo slave")
-        response = self.stubs[1].showCards(sessione)
+        response = self.stubs[self.rr].showCards(sessione)
+        self.rr = (self.rr + 1)%2
         cards = []
         for i in response.cards:
             card = []

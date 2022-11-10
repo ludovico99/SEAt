@@ -11,13 +11,17 @@ provider "aws" {
   region  = "us-east-1"
   shared_credentials_files = ["$HOME/.aws/credentials"]
 }
+variable "ami" {}
+variable "security_group"{}
+variable "instance_type" {}
+variable "key_name"{}
+
 
 resource "aws_instance" "SEAt" {
-  ami           = "ami-0149b2da6ceec4bb0"   
-  instance_type = "t2.medium"
-  vpc_security_group_ids = ["sg-0e1f968a157148ba4"]
-  key_name = "me-key"
-  /*subnet_id              = "subnet-d7c656be"*/
+  ami           = var.ami
+  instance_type = var.instance_type
+  vpc_security_group_ids = [var.security_group]
+  key_name = var.key_name
   tags = {
     Name = "SEAt"
   }
@@ -30,12 +34,10 @@ data "external" "get_table" {
 
 output "tables" {
   value = data.external.get_table.result
-  
 }
 
 data "external" "get_queue" {
   program = ["python3","createQueue.py"]
-
 }
 
 output "queue" {
