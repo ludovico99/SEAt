@@ -24,7 +24,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
     Viene creato il file seguente ~/.aws/credentials. 
 
     3) Questo file va aggiornato ogni volta che viene avviata una nuova sessione del learner lab.
-    E' presente lo script /SEAT_project/credentials.sh che permette di copiare le nuove credenziali di sessione in  ~/.aws/credentials e in tutte le cartelle dei microservizi (Questo perchè nel dockerfile che ha visibilità "locale" viene eseguito il comando COPY che copia il contenuto di cridentials della macchina host nel file /root/.aws/credentials del container che esponde il servizio). 
+    E' presente lo script SEAT_project/credentials.sh che permette di copiare le nuove credenziali di sessione in  ~/.aws/credentials e in tutte le cartelle dei microservizi (Questo perchè nel dockerfile che ha visibilità "locale" viene eseguito il comando COPY che copia il contenuto di credentials della macchina host nel file root/.aws/credentials del container che esponde il servizio). 
 
     Il deploy dell'applicazione è basato sull'utilizzo  di:
 
@@ -45,7 +45,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
         python3 -m pip install --user ansible
         python3 -m pip install --upgrade --user ansible
 
- 3) E' necessario modificare i files /SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
+ 3) E' necessario modificare i files SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
 
     --> Per terraform è possibile modificare il tipo di istanza da creare, l'ami dell'istanza EC2 (Utilizzare distribuzioni Ubuntu/Debian)  da creare, l'id del security group (Deve necessariamente garantire l'ingresso a traffico HTTP e SSH proveniente dalla macchina dalla quale si intende fare il deploy. In uscita è importante che venga garantito il passaggio a traffico HTTP) e il nome della chiave privata (creata in precedenza all'interno del servizio EC2. Vedere https://docs.aws.amazon.com/it_it/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
 
