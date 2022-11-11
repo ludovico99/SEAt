@@ -63,7 +63,7 @@ class PaymentGateway():
         sessione = grpc_pb2.session(dict = list)
         
         # response = self.stubPayment.showCards(sessione)
-        print("sto leggendo dallo slave")
+        print("richiesta a {}".format(self.rr))
         response = self.stubs[self.rr].showCards(sessione)
         self.rr = (self.rr + 1)%2
         cards = []
