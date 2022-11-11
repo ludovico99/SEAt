@@ -977,7 +977,7 @@ class ServiceRegistryStub(object):
         self.getPortAndIp = channel.unary_unary(
                 '/proto.ServiceRegistry/getPortAndIp',
                 request_serializer=proto_dot_grpc__pb2.registryRequest.SerializeToString,
-                response_deserializer=proto_dot_grpc__pb2.registryResponse.FromString,
+                response_deserializer=proto_dot_grpc__pb2.registryResponses.FromString,
                 )
 
 
@@ -997,7 +997,7 @@ def add_ServiceRegistryServicer_to_server(servicer, server):
             'getPortAndIp': grpc.unary_unary_rpc_method_handler(
                     servicer.getPortAndIp,
                     request_deserializer=proto_dot_grpc__pb2.registryRequest.FromString,
-                    response_serializer=proto_dot_grpc__pb2.registryResponse.SerializeToString,
+                    response_serializer=proto_dot_grpc__pb2.registryResponses.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1023,6 +1023,6 @@ class ServiceRegistry(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/proto.ServiceRegistry/getPortAndIp',
             proto_dot_grpc__pb2.registryRequest.SerializeToString,
-            proto_dot_grpc__pb2.registryResponse.FromString,
+            proto_dot_grpc__pb2.registryResponses.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

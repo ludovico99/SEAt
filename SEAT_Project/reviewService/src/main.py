@@ -31,7 +31,8 @@ class ReviewServicer(grpc_pb2_grpc.ReviewServicer):
         try:
             queue_name = "service_registry_queue"
             sqs = boto3.client('sqs',region_name='us-east-1')
-            ipAddr = socket.gethostbyname(socket.gethostname())
+            hostname = socket.gethostname()
+            ipAddr = socket.gethostbyname(hostname)
             response = sqs.send_message(
             QueueUrl= queue_name,
             DelaySeconds=10,
@@ -47,7 +48,7 @@ class ReviewServicer(grpc_pb2_grpc.ReviewServicer):
                 
             },
             MessageBody=(
-                "My port number is :{}, my ipAddress is :{}, service name :{}.".format(port,ipAddr,self.__class__.__name__)
+                "My port number is :{}, my ipAddress is :{}, service name :{}, hostname :{}.".format(port, ipAddr, self.__class__.__name__, hostname)
             )
         )
 

@@ -19,15 +19,15 @@ class ReviewGateway():
 
                 time.sleep(5)
 
-        if response.port == "0":
+        if response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.reviewChannel = grpc.insecure_channel("{}:{}".format("review","50054"))
             self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel) 
 
 
         else :
-            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
-            self.reviewChannel = grpc.insecure_channel("{}:{}".format("review",response.port))
+            print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
+            self.reviewChannel = grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port))
             self.stubReview = grpc_pb2_grpc.ReviewStub(self.reviewChannel) 
 
     def getReviews(self,lidoID):

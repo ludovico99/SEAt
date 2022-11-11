@@ -1,10 +1,13 @@
 #!/bin/sh
+PROJ_DIR="/home/ludovico99/Scrivania/SEAt/SEAT_Project/"
 
 echo \
 "[default]
-aws_access_key_id=ASIA2UH6LIUURI7CQHW5
-aws_secret_access_key=waAU8cYgRdkz62kgzEJDo5Ca6ImdIjx4oKIADyHR
-aws_session_token=FwoGZXIvYXdzEKP//////////wEaDDkt4WyNfDCYCelq+SLSASGVbrW2bJ2Ks1M69tkOGM0+dCg7zfyK5XeJX2JdYI68eU0QTiW20dA1hnG3cIK/7lx3k3xv8IA48IBItP5tDfk8CzIl4UjyHIPsEfvlUvWE7u6OFJ1bnSLoDQTsGRzD4CafzrLiMNH377r6Yonmc6RqBxmugxvoBdzO7+ZhRgse+erHaEW9uJOMogUyj/z0B0L4yHX1P5dSGNW1sdc7cN2NrEWYvyopDm027I4DnwHVeiNNGxdCFL5w2A8M3dNtNDwajp6VbdzxBms17aevTUG0pyims7ibBjItsWQifxYdhsPAzSRAPx7fkKmLAUlJzgREIaB/OJRtgw6IxxpT6Dt0JZlPyQoS" > $HOME/.aws/credentials 
+aws_access_key_id=ASIAZSPXN3SF3W2KBGFD
+aws_secret_access_key=vXPZ8RRbEJrcqieloarcAbr7fyE2FNUNKpPPXr+l
+aws_session_token=FwoGZXIvYXdzEKf//////////wEaDK9GQG24J205RLq1zyLXASbi8DdqkQGcBNlJgm9/wi6FGTp/kVYJ9J5caX5gcIAbIAIkgngKWaqqoPUMJKjj8Y5p3c/H5vXo/TLAeRG0hWgP37FvGwffggw3U32JXn3k4/DpOYnwxgG9n6w+u4Z95nUTqm/5pxmpOT895LYwzgOD7TEMEZqwk7kUosy8UuUhugELUGe93sTHjrFp4ni5/VaCfuEp2NKRHoLJugt5dl5AnZ/dnBw99jrxOoxxvUFNOTBzCTWagIhIHsgMLrhK0+8AgSljNvPkAUY4UJUd2BrWH4oQ8z6aKOWTuZsGMi3YMZYcDW9L9HsRK5hpp4RGUiKS3V1a91W5gAgXn+X2VWfnKCpib59Z+ZR7BqQ=" > $HOME/.aws/credentials 
+
+cd $PROJ_DIR
 
 cp $HOME/.aws/credentials ./accountingService/credentials
 cp $HOME/.aws/credentials ./quoteService/credentials

@@ -16,15 +16,15 @@ class QuoteGateway():
 
                 time.sleep(5)
 
-        if response.port == "0":
+        if response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.quoteChannel = grpc.insecure_channel("{}:{}".format("quote","50053"))
             self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel) 
 
 
         else :
-            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
-            self.quoteChannel = grpc.insecure_channel("{}:{}".format("quote",response.port))
+            print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
+            self.quoteChannel = grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port))
             self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel) 
 
     def modifyPrice(self,priceOmbrellone, priceSdraio, priceLettino, priceSedia, incrPrimeFile, incrAltaStagione, incrBassaStagione, incrMediaStagione, username):

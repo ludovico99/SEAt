@@ -38,15 +38,15 @@ class AccountingGateway():
             except Exception as e:
                 time.sleep(5)
 
-        if response.port == "0":
+        if response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.channelAccounting = grpc.insecure_channel("{}:{}".format("accounting","50052"))
             self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.channelAccounting) 
 
 
         else :
-            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
-            self.channelAccounting = grpc.insecure_channel("{}:{}".format("accounting",response.port))
+            print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
+            self.channelAccounting = grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port))
             self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.channelAccounting) 
 
  

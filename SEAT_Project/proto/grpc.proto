@@ -304,15 +304,21 @@ message cardDetails {
 
 // ------------ Service Registry Service ---------------
 service ServiceRegistry {
-    rpc getPortAndIp (registryRequest) returns (registryResponse);
+    rpc getPortAndIp (registryRequest) returns (registryResponses);
 }
     message registryRequest {
     string serviceName = 1;
     
 }
 
+message registryResponses {
+    repeated registryResponse responses = 1;
+    
+}
+
 message registryResponse {
     string serviceName = 1;
-    string ip = 2;
-    string port = 3; 
+    string hostname = 2;
+    string ip = 3;
+    string port = 4; 
 }

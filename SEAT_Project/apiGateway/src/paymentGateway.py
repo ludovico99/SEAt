@@ -23,16 +23,20 @@ class PaymentGateway():
 
                 time.sleep(5)
 
-        if response.port == "0":
+        if response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1","50055")))
             self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2","50055")))
 
 
         else :
-            print("{}:Service registry contacted successfully: dynamic binding available".format(self.__class__.__name__))
-            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1",response.port)))
-            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2",response.port)))
+            print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
+
+            if len(response.responses) > 1:
+                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port)))
+                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[1].hostname,response.responses[1].port)))
+            else: 
+                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port)))
         
         self.stubs = []
         for ch in self.channels:

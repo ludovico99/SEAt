@@ -37,10 +37,23 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
         try :
             self.sqlConn = sqlite3.connect(self.db_path)
             response = self.sqlConn.execute('SELECT * FROM serviceRegistry WHERE serviceName=?',(request.serviceName,)).fetchall()
-            return grpc_pb2.registryResponse (serviceName = response[0][1],ip =response[0][2], port =response[0][3])
+            list = []
+            if len(response) >= 1:
+                for i in range (0,len(response)):
+                    aux = grpc_pb2.registryResponse (serviceName = response[0][1],ip =response[0][2], port =response[0][3], hostname = response[0][4]) 
+                    list.append(aux)
+                return grpc_pb2.registryResponses (responses = list)
+            else :
+                aux = grpc_pb2.registryResponse (serviceName = "all",ip ="0.0.0.0", port = "0", hostname = "") 
+                list.append (aux)
+                return grpc_pb2.registryResponses (responses = list)
         except Exception as e:
             print(repr(e))
-            return grpc_pb2.registryResponse (serviceName = "all",ip ="0.0.0.0", port = "0")
+            list = []
+            aux = grpc_pb2.registryResponse (serviceName = "all",ip ="0.0.0.0", port = "0", hostname = "") 
+            list.append (aux)
+            return grpc_pb2.registryResponses (responses = list)
+            
 
     def receiveMessage (self):
         # Receive message from SQS queue
@@ -67,7 +80,8 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
                     token = str(body).split(':')
                     port = token[1].split(',')[0]
                     ip = token[2].split(',')[0]
-                    service_name = token[3][:-1]
+                    service_name = token[3].split(',')[0]
+                    hostname= token[4][:-1]
                    
                     receipt_handle = message['ReceiptHandle']
 
@@ -80,7 +94,7 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
 
                     try :
                         self.sqlConn = sqlite3.connect(self.db_path)
-                        result = self.sqlConn.execute('INSERT OR REPLACE INTO serviceRegistry (serviceName,ip_Addr,port) values (?,?,?)',(service_name,ip, port))
+                        result = self.sqlConn.execute('INSERT OR REPLACE INTO serviceRegistry (serviceName, ip_Addr, port, hostname) values (?,?,?,?)',(service_name,ip, port,hostname))
                         self.sqlConn.commit()
                     except Exception as e:
                         print(repr(e))

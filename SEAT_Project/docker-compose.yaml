@@ -58,7 +58,6 @@ services:
       - ./serviceRegistry/src:/home/serviceRegistry
   
    
-
   payment: 
     build: ./paymentService
     environment:
@@ -71,26 +70,6 @@ services:
       - accounting
       - rabbitmq
       - service_registry
-
-  # payment_2:
-  #   <<: *payment # <- this is a merge (<<) with an alias (*name-me)
-  #   # keys below merge notation override those that declared under anchor
-  #   # so this:
-  #   ports:
-  #   - "50056:50055"
-  #   # replaces default 'ports' (the whole key)
-  
-  # payment_2: 
-  #   build: ./paymentService
-  #   environment:
-  #     AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
-  #   volumes:
-  #     - ./paymentService/src:/home/paymentService
-  #   ports:
-  #     - "50055-50056:50055"
-  #   depends_on:
-  #     - accounting
-  #     - rabbitmq
 
   quote: 
     build: ./quoteService
