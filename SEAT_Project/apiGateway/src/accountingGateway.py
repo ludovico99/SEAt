@@ -38,7 +38,7 @@ class AccountingGateway():
             except Exception as e:
                 time.sleep(5)
 
-        if response.responses[0].port == "0":
+        if response == None or response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.channelAccounting = grpc.insecure_channel("{}:{}".format("accounting","50052"))
             self.stubAccounting = grpc_pb2_grpc.AccountingStub(self.channelAccounting) 

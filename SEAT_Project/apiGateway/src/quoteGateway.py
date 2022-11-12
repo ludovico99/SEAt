@@ -16,7 +16,7 @@ class QuoteGateway():
 
                 time.sleep(5)
 
-        if response.responses[0].port == "0":
+        if response == None or response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.quoteChannel = grpc.insecure_channel("{}:{}".format("quote","50053"))
             self.stubQuote = grpc_pb2_grpc.QuoteStub(self.quoteChannel) 

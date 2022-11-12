@@ -23,7 +23,7 @@ class PaymentGateway():
 
                 time.sleep(5)
 
-        if response.responses[0].port == "0":
+        if response == None or response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1","50055")))
             self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2","50055")))
