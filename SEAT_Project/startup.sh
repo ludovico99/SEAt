@@ -1,8 +1,9 @@
-# ssh = '/home/ludovico99/Scrivania/me-key.pem'
-SSH='/home/elisa/Scrivania/SEAt_keys.pem'
-PROJ_DIR = "/home/elisa/Scrivania/SEAt/SEAT_Project"
+#!/bin/sh
 
-cd terraform
+SSH='/home/ludovico99/Scrivania/me-key.pem'
+PROJ_DIR="/home/ludovico99/Scrivania/SEAt/SEAT_Project"
+
+cd $PROJ_DIR/terraform
 
 terraform init
 terraform plan -var-file="terraform.tfvars"
@@ -11,7 +12,6 @@ TABLE=$(terraform output tables)
 QUEUE=$(terraform output queue)
 IPADRR_str=$(terraform output instance_public_ip)
 IPADRR=$( echo $IPADRR_str | awk '{print substr($0, 2, length($0) - 2)}' ) 
-
 
 cd ../
 

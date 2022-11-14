@@ -55,6 +55,8 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
  5) Fare la stessa cosa del punto 4 nel file SEAT_Project/deploy.sh
 
+ E' possibile configurare il numero di repliche per il servizio pagamento nel file SEAT_project/run.sh, modificando la variabile d'ambiente SCALE_FACTOR.
+
 [ESECUZIONE]:
 
 1) Eseguire lo script bash /SEAT_Project/startup.sh per istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS --> Il comando precedente porta alla creazione/modifica del file hosts.ini con l'indirizzo ip della macchina EC2 appena creata. Questo file verrà utilizzato da ansible.

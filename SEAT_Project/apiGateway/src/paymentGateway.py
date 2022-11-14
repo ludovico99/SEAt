@@ -1,3 +1,4 @@
+import os
 import grpc
 import time
 from proto import grpc_pb2
@@ -8,10 +9,10 @@ class PaymentGateway():
     def __init__(self):
         
         self.rr = 0
-        self.number_instances = 2
+        self.number_instances = int(os.environ['SCALE_FACTOR'])
         self.channels = []
         
-        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.ch = grpc.insecure_channel("{}:50000".format("service_registry"))
         self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch)
 
         while (True):
@@ -25,28 +26,25 @@ class PaymentGateway():
 
         if response == None or response.responses[0].port == "0":
             print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
-            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_1","50055")))
-            self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_2","50055")))
+            for i in range (0, self.number_instances):
+                tmp = i + 1 
+                self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_{}".format(tmp),"50055")))
+                
 
 
         else :
             print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
 
-            if len(response.responses) > 1:
-                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port)))
-                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[1].hostname,response.responses[1].port)))
-            else: 
-                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[0].hostname,response.responses[0].port)))
-        
+            for i in range (0, len(response.responses)):
+                self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[i].hostname,response.responses[i].port)))
+            
+            
         self.stubs = []
         for ch in self.channels:
             self.stubs.append(grpc_pb2_grpc.PaymentStub(ch))
         print("calling the start of the queue stuff")
         self.stubs[0].startConsume(grpc_pb2.empty())
         
-        # self.paymentChannel = grpc.insecure_channel("{}:50055".format("payment"))
-        # self.stubPayment = grpc_pb2_grpc.PaymentStub(self.paymentChannel)
-
 
     def listOfCards(self,lido_id,email,type):
         """entry point for the retrieve of the cards associated to the user
@@ -67,9 +65,9 @@ class PaymentGateway():
         sessione = grpc_pb2.session(dict = list)
         
         # response = self.stubPayment.showCards(sessione)
-        print("richiesta a {}".format(self.rr))
+        print("Richiesta a {}".format(self.rr))
         response = self.stubs[self.rr].showCards(sessione)
-        self.rr = (self.rr + 1)%2
+        self.rr = (self.rr + 1)%int(self.number_instances)
         cards = []
         for i in response.cards:
             card = []

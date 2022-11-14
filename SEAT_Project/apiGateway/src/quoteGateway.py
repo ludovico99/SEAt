@@ -6,7 +6,7 @@ from proto import grpc_pb2_grpc
 class QuoteGateway():
 
     def __init__(self):
-        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.ch = grpc.insecure_channel("{}:50000".format("service_registry"))
         self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch) 
         while (True):
             try:  

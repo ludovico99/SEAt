@@ -111,28 +111,12 @@ MICROSERVICES PORTS:
 50051 <-- reservationService
 AMQP port <-- EmailService
 
-TABELLE NEL DATABASE:
-* DETTAGLI LIDO: ha il totale delle sdraio, lettini ecc...
-* POSTAZIONI PER FILA: lido, ogni fila quanti ombrelloni ha (il totale si calcola)
-* PRENOTAZIONI: memorizza i dettagli delle prenotazioni di tutti
-
-  -- DA MODIFICARE GIORNALMENTE --
-* MAGAZZINO: ha la disponibilità odierna dei pezzi
-* POSTAZIONI: indica nel giorno odierno quali postazioni sono occupate
-
 RABBITMQ:
 1) Scaricare il server su https://www.rabbitmq.com/download.html
 2) installare pika in python: python -m pip install pika --upgrade
 
 Inserire cartella sbin di RABBITMQ nel path per sfruttare rabbitmq CLI!!!
 rabbitmqctl help
-
-
-ISTANZIAZIONE PROGETTO - da aggiornare (!)
-
-[FASE 1: Set up] -----------------------------------------------------------
-1) creare i container e copiarci sopra il codice
-2) far partire il codice dei microservizi e iniziare l'ascolto (NB: il server che riceve le richieste con gRPC deve essere sempre attivo)
 
 
 PER FAR PARTIRE IL SERVER FLASK andare nella cartella dove c'è app.py:

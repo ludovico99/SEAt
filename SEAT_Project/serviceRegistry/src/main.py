@@ -21,7 +21,7 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
             if (self.sqlConn != None):
                 with open("{}/createDB.sql".format(os.path.dirname(__file__)),"r") as f:
                     self.sqlConn.executescript(f.read())
-                
+                self.sqlConn.execute('DELETE FROM serviceRegistry').fetchall()
                 self.sqlConn.commit()
 
             response,msg= self.receiveMessage ()
@@ -40,7 +40,7 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
             list = []
             if len(response) >= 1:
                 for i in range (0,len(response)):
-                    aux = grpc_pb2.registryResponse (serviceName = response[0][1],ip =response[0][2], port =response[0][3], hostname = response[0][4]) 
+                    aux = grpc_pb2.registryResponse (serviceName = response[i][1],ip =response[i][2], port =response[i][3], hostname = response[i][4]) 
                     list.append(aux)
                 return grpc_pb2.registryResponses (responses = list)
             else :
@@ -115,8 +115,8 @@ class ServiceRegistryServicer(grpc_pb2_grpc.ServiceRegistryServicer):
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 grpc_pb2_grpc.add_ServiceRegistryServicer_to_server(ServiceRegistryServicer(), server)
-print('Starting SERVICE REGISTRY. Listening on port 50057.')
-server.add_insecure_port('[::]:50057')
+print('Starting SERVICE REGISTRY. Listening on port 50000.')
+server.add_insecure_port('[::]:50000')
 server.start()
 
 try:

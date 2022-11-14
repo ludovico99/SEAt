@@ -15,10 +15,12 @@ services:
 
     
   front-end:
-    build: ./apiGateway
+    build: 
+      context: ./apiGateway
     ports:
       - "80:5000"
     environment:
+      SCALE_FACTOR: $SCALE_FACTOR
       FLASK_ENV: development
     depends_on:
       - accounting
@@ -53,7 +55,7 @@ services:
   service_registry:
     build: ./serviceRegistry
     ports:
-      - "50057:50057"
+      - "50000:50000"
     volumes:
       - ./serviceRegistry/src:/home/serviceRegistry
   
@@ -65,7 +67,7 @@ services:
     volumes:
       - ./paymentService/src:/home/paymentService
     ports:
-      - "50055-50056:50055"
+      - "50055-50075:50055"
     depends_on:
       - accounting
       - rabbitmq

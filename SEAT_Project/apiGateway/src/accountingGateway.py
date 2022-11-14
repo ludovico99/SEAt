@@ -29,7 +29,7 @@ class AccountingGateway():
     """
     def __init__(self):
         self.cb = circuitBreaker.MyCircuitBreaker(self.__class__.__name__) #only for the login method invocation
-        self.ch = grpc.insecure_channel("{}:50057".format("service_registry"))
+        self.ch = grpc.insecure_channel("{}:50000".format("service_registry"))
         self.stubServiceRegistry = grpc_pb2_grpc.ServiceRegistryStub(self.ch) 
         while (True):
             try:  
