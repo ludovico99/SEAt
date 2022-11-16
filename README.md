@@ -24,7 +24,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
     Viene creato il file seguente ~/.aws/credentials. 
 
     3) Questo file va aggiornato ogni volta che viene avviata una nuova sessione del learner lab.
-    E' presente lo script SEAT_project/credentials.sh che permette di copiare le nuove credenziali di sessione in  ~/.aws/credentials e in tutte le cartelle dei microservizi (Questo perchè nel dockerfile che ha visibilità "locale" viene eseguito il comando COPY che copia il contenuto di credentials della macchina host nel file root/.aws/credentials del container che esponde il servizio). In questo file deve essere indicata il path assoluto del progetto.
+    E' presente lo script SEAT_project/credentials.sh che permette di copiare le nuove credenziali di sessione in  ~/.aws/credentials. In questo file deve essere indicato il path assoluto del progetto.
 
     Il deploy dell'applicazione è basato sull'utilizzo  di:
 
@@ -71,7 +71,9 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 4) Arrestare l'istanza EC2 e riavviarla. 
 
-5) L'applicazione sarà in esecuzione su http://[indirizzo ip publico della macchina]:80
+5) L'applicazione sarà in esecuzione su http://[indirizzo ip publico della macchina]:80. 
+
+NB: Ad ogni arresto e riavvio dell'istanza EC2 l'indirizzo IP pubblico associato viene cambiato.
 
 
 

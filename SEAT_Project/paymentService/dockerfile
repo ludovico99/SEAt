@@ -5,5 +5,4 @@ WORKDIR /home
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 ENV PYTHONUNBUFFERED=1
-COPY credentials /root/.aws/
 CMD ["python", "paymentService/main.py"]

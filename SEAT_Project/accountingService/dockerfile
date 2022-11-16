@@ -6,5 +6,5 @@ RUN apk add --no-cache aws-cli
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 ENV PYTHONUNBUFFERED=1
-COPY credentials /root/.aws/
+#COPY credentials /root/.aws/
 CMD ["python", "accountingService/main.py"]

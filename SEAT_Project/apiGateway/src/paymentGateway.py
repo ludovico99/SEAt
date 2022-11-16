@@ -9,7 +9,9 @@ class PaymentGateway():
     def __init__(self):
         
         self.rr = 0
-        self.number_instances = int(os.environ['SCALE_FACTOR'])
+        self.number_instances = 0
+        if os.environ['SCALE_FACTOR'].isnumeric():
+            self.number_instances = int(os.environ['SCALE_FACTOR'])
         self.channels = []
         
         self.ch = grpc.insecure_channel("{}:50000".format("service_registry"))
@@ -37,6 +39,8 @@ class PaymentGateway():
 
             for i in range (0, len(response.responses)):
                 self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[i].hostname,response.responses[i].port)))
+
+            self.number_instances = len (response.responses)
             
             
         self.stubs = []
