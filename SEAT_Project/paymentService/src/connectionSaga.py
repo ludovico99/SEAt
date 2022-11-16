@@ -196,12 +196,12 @@ class ConnectionSaga (Connection):
                 request = "SUCCESS:{}:{}:{}:{}".format(id,username,email,msg)
 
                 # 3. aggiornare le repliche se l'operazione ha avuto successo
-                for stub in self.slaves:
-                    todo = []
-                    todo.append(grpc_pb2.operation(op="ADD", username=lido_id, cardId="", cvc=0, credito=costo))
-                    todo.append(grpc_pb2.operation(op="SUB", username=username, cardId=str(cardId), cvc=0, credito=costo))
-                    res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
-                    print("ho aggiornato la replica secondaria")
+                # for stub in self.slaves:
+                #     todo = []
+                #     todo.append(grpc_pb2.operation(op="ADD", username=lido_id, cardId="", cvc=0, credito=costo))
+                #     todo.append(grpc_pb2.operation(op="SUB", username=username, cardId=str(cardId), cvc=0, credito=costo))
+                #     res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
+                #     print("ho aggiornato la replica secondaria")
                     #TODO se res è falso??? magari memorizza le info e fai l'undo dell'operazione
             
             self.publish(request, 'Pay_response')
@@ -285,21 +285,23 @@ class ConnectionSaga (Connection):
                 for i in range (0,len(list)):
                     self.sqlConn.execute('INSERT INTO payment (username,cardId,cvc,Credito) values (?,?,?,?)',(list[i][0],list[i][1],list[i][2],list[i][3])).fetchall()
                     self.sqlConn.commit()
+                
+                request = "{}:{}:{}".format(username,admin,"DELETE operation has failed")    
 
             else:
                 # aggiornare le repliche se l'operazione ha avuto successo
-                for stub in self.slaves:
-                    todo = []
-                    if len(list)>0:
-                        for i in range (0,len(list)):
-                            todo.append(grpc_pb2.operation(op="DELETE", username=list[i][0], cardId=list[i][1], cvc=int(list[i][2]), credito=int(list[i][3])))
+                # for stub in self.slaves:
+                #     todo = []
+                #     if len(list)>0:
+                #         for i in range (0,len(list)):
+                #             todo.append(grpc_pb2.operation(op="DELETE", username=list[i][0], cardId=list[i][1], cvc=int(list[i][2]), credito=int(list[i][3])))
                     
-                    res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
-                    print("ho aggiornato la replica secondaria")
-                    #TODO se res è falso??? magari memorizza le info e fai l'undo dell'operazione
+                #     res = stub.updateRequest(grpc_pb2.updateReq(o=todo))
+                #     print("ho aggiornato la replica secondaria")
+                #     #TODO se res è falso??? magari memorizza le info e fai l'undo dell'operazione
             
-            request = "{}:{}:{}".format(username,admin,"DELETE operation completed successfully")             
-            # self.channel.basic_publish(exchange='topic_logs_2', routing_key="Account.response.1", body=request)
+                request = "{}:{}:{}".format(username,admin,"DELETE operation successfully completed")   
+                          
             print(properties.reply_to)
             self.channel.basic_publish(exchange='', routing_key= properties.reply_to,
                 properties=pika.BasicProperties(
