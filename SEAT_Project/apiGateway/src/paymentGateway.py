@@ -7,9 +7,10 @@ from proto import grpc_pb2_grpc
 class PaymentGateway():
 
     def __init__(self):
-        
+
+                
         self.rr = 0
-        self.number_instances = 0
+        self.number_instances = 1
         if os.environ['SCALE_FACTOR'].isnumeric():
             self.number_instances = int(os.environ['SCALE_FACTOR'])
         self.channels = []
@@ -23,19 +24,17 @@ class PaymentGateway():
                 response = self.stubServiceRegistry.getPortAndIp(grpc_pb2.registryRequest(serviceName= "PaymentServicer"))
                 break
             except Exception as e:
-
                 time.sleep(5)
 
         if response == None or response.responses[0].port == "0":
-            print("{}:Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
+            print("{}: Unable to contact service registry: static binding needed to continue".format(self.__class__.__name__))
             for i in range (0, self.number_instances):
                 tmp = i + 1 
                 self.channels.append(grpc.insecure_channel("{}:{}".format("seat_project_payment_{}".format(tmp),"50055")))
                 
 
-
         else :
-            print("{}:Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
+            print("{}: Service registry successfully contacted: dynamic binding available".format(self.__class__.__name__))
 
             for i in range (0, len(response.responses)):
                 self.channels.append(grpc.insecure_channel("{}:{}".format(response.responses[i].hostname,response.responses[i].port)))
@@ -47,7 +46,17 @@ class PaymentGateway():
         for ch in self.channels:
             self.stubs.append(grpc_pb2_grpc.PaymentStub(ch))
         print("calling the start of the queue stuff")
-        self.stubs[0].startConsume(grpc_pb2.empty())
+        i = 0
+
+        #Meccanismo di sincronizzazione se il servizio di payment non è ancora attivo. Succede quando il service registry non è contattabile
+        while (i<5):
+            try:  
+                self.stubs[0].startConsume(grpc_pb2.empty())
+                break
+            except Exception as e:
+                i += 1
+                time.sleep(5)
+
         
 
     def listOfCards(self,lido_id,email,type):

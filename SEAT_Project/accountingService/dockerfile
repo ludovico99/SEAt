@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1
 FROM python:3.7-alpine
 WORKDIR /home
-#RUN apk add --no-cache gcc musl-dev linux-headers
 RUN apk add --no-cache aws-cli
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 ENV PYTHONUNBUFFERED=1
+RUN echo $HOME
 #COPY credentials /root/.aws/
 CMD ["python", "accountingService/main.py"]

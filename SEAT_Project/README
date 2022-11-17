@@ -12,7 +12,14 @@ LIBRERIE DA SCARICARE:
 11) pip install circuitbreaker
 
 
+PER NON USARE SUDO (con sudo $HOME è /root e non la cartella /home/ludovico99):
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+
 COMANDI DOCKER:
+
 sudo docker ps -a
 sudo docker rm -f <container-id> <-- separati da spazi
 sudo docker build -t <tag> .
@@ -31,7 +38,7 @@ sudo docker network rm  111496a97204
 sudo docker network inspect -f '{{json .Containers}}' 111496a97204 | jq '.[] | .Name + ":" + .IPv4Address'
 
 sudo docker container exec -it 9cc0c687e8fd ls 
-sudo docker container exec -it 9cc0c687e8fd  ls -a /root/.aws/credentials
+sudo docker container exec -it be688d8340be  ls -a /root/.aws/credentials
 
 sudo docker image prune --filter="dangling=true"
 sudo docker-compose up --scale payment=2 --build

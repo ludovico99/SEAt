@@ -31,9 +31,9 @@ services:
   accounting:
     build: ./accountingService
     volumes:
-     - ./accountingService/src:/home/accountingService
-    #   - ~/.aws/credentials:$HOME/.aws/credentials:ro
-     - /home/ludovico99/.aws/:$HOME/.aws/
+      - ./accountingService/src:/home/accountingService
+      - ~/.aws/:/root/.aws:ro
+      # - /home/ludovico99/.aws/:/root/.aws:ro
     environment:
       AMQP_URL: 'amqp://guest:guest@rabbitmq:5672?connection_attempts=5&retry_delay=15'
     ports:
@@ -57,8 +57,12 @@ services:
     ports:
       - "50000:50000"
     volumes:
+      # - type: bind
+      #   source: ~/.aws/credentials
+      #   target: /root/.aws
       - ./serviceRegistry/src:/home/serviceRegistry
-      - /home/ludovico99/.aws/:$HOME/.aws/
+      - ~/.aws/:/root/.aws:ro
+
   
    
   payment: 
@@ -67,7 +71,7 @@ services:
       AMQP_URL: 'amqp://rabbitmq:5672?connection_attempts=5&retry_delay=5'
     volumes:
       - ./paymentService/src:/home/paymentService
-      - /home/ludovico99/.aws/:$HOME/.aws/
+      - ~/.aws/:/root/.aws:ro
     ports:
       - "50055-50075:50055"
     depends_on:
@@ -79,7 +83,7 @@ services:
     build: ./quoteService
     volumes:
       - ./quoteService/src:/home/quoteService
-      - /home/ludovico99/.aws/:$HOME/.aws/
+      - ~/.aws/:/root/.aws:ro
     ports:
       - "50053:50053"
     depends_on:
@@ -93,7 +97,7 @@ services:
       AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
     volumes:
       - ./reservationService/src:/home/reservationService
-      - /home/ludovico99/.aws/:$HOME/.aws/
+      - ~/.aws/:/root/.aws:ro
     ports:
       - "50051:50051"
     depends_on:
@@ -105,11 +109,10 @@ services:
     build: ./reviewService
     volumes:
       - ./reviewService/src:/home/reviewService
-      - /home/ludovico99/.aws/:$HOME/.aws/
+      - ~/.aws/:/root/.aws:ro
     ports:
       - "50054:50054"
     depends_on:
       - accounting
       - service_registry
-
-          
+      

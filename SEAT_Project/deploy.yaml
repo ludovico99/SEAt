@@ -17,17 +17,17 @@
     #   register: app  # save task output 
 
 
-    - name: ansible create .aws directory 
-      file:
-        path: "{{remote_home}}/.aws"
-        mode: "u=rwx,g=rwx,o=rwx"
-        recurse: yes
-        state: directory
+    # - name: ansible create .aws directory 
+    #   file:
+    #     path: "{{remote_home}}/.aws"
+    #     mode: "u=rwx,g=rwx,o=rwx"
+    #     recurse: yes
+    #     state: directory
 
-    - name: copy aws credentials
-      copy:
-        src: "/$HOME/.aws/credentials"
-        dest: "{{ remote_aws_cred }}"
+    # - name: copy aws credentials
+    #   copy:
+    #     src: "{{ local_aws_cred }}"
+    #     dest: "{{ remote_aws_cred }}"
 
     - name: install python 3
       become: yes # we need root privileges 
