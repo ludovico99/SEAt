@@ -1,13 +1,23 @@
 # How-to di SEAt
 How-to basato su distribuzione Linux Ubuntu/Debian
 
-[INSTALLAZIONE]:
+### INDICE: 
+- INSTALLAZIONE: ottenere la copia locale del codice
+- PREREQUISITI: dettagli sull'installazione di AWS CLI, Terraform e Ansible. Saltare se già installati
+- CONFIGURAZIONE: dettagli per eseguire il codice
+- ESECUZIONE: istruzioni per l'avvio dell'applicazione                                          
+
+
+
+
+## INSTALLAZIONE
 
 1) Eseguire il clone del repository github:
 
         git clone https://github.com/ludovico99/SEAt.git
+        
 
-[CONFIGURAZIONE]:
+## PREREQUISITI
 
 1) Installare AWS cli sulla macchina host:
 
@@ -18,54 +28,61 @@ How-to basato su distribuzione Linux Ubuntu/Debian
     2) Iniziare l'AWS CLI configuration fornendo i dettagli in AWS details:
     
             aws configure 
-
-    Per Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
-    ![AWS details](/immagini/AWS_details.png)
-    Viene creato il file seguente ~/.aws/credentials. 
-
-    3) Questo file va aggiornato ogni volta che viene avviata una nuova sessione del learner lab.
+            
+        Inserire le stringhe fornite in Learner Lab - Foundational Services --> AWS details:
+        
+        ![AWS details](/immagini/AWS_details.png)
+        
+    3) Viene creato il file ~/.aws/credentials: va aggiornato ogni volta che viene avviata una nuova sessione del learner lab.
     E' presente lo script SEAT_project/credentials.sh che permette di copiare le nuove credenziali di sessione in  ~/.aws/credentials. In questo file deve essere indicato il path assoluto del progetto.
 
-    Il deploy dell'applicazione è basato sull'utilizzo  di:
 
-    --> terraform: E' un open-source IaC tool software che consente di creare in modo sicuro e predicibile, cambiare e migliorare l'infrastruttura, nel nostro caso EC2. E' basato sulla dichiarazione di risorse AWS 
+    
+2) Il deploy dell'applicazione è basato sull'utilizzo  di Terraform e Ansible. Per installarli su ubuntu/debian seguire gli step:
 
-    --> ansible: E' un software libero che consente di automatizzare le procedure di configurazione e gestione sui sistemi unix-like e Windows
+    1) Terraform: 
 
-2) E' necessario installare entrambi i tools (tutorial per ubuntu/debian):
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+            sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            sudo apt install terraform
 
-    --> Terraform: 
+    2) Ansible:
 
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-        sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-        sudo apt install terraform
+            python3 -m pip install --user ansible
+            python3 -m pip install --upgrade --user ansible
 
-    --> Ansible:
 
-        python3 -m pip install --user ansible
-        python3 -m pip install --upgrade --user ansible
 
- 3) E' necessario modificare i files SEAT_Project/terraform/terraform.tfvars e /SEAT_Project/deploy.yaml per configurare rispettivamente terraform e ansible:
+## CONFIGURAZIONE
 
-    --> Per terraform è possibile modificare il tipo di istanza da creare, l'ami dell'istanza EC2 (Utilizzare distribuzioni Ubuntu/Debian)  da creare, l'id del security group (Deve necessariamente garantire l'ingresso a traffico HTTP e SSH proveniente dalla macchina dalla quale si intende fare il deploy. In uscita è importante che venga garantito il passaggio a traffico HTTP) e il nome della chiave privata (creata in precedenza all'interno del servizio EC2. Vedere https://docs.aws.amazon.com/it_it/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
+1) Modificare i files:
 
-    --> Per ansible è possibile fare la copia dell'application directory decommentando le righe da 13 a 17 e modificando la variabile local_app_dir. 
+    * TERRAFORM (file: SEAT_Project/terraform/terraform.tfvars) - è possibile modificare:
+      - il tipo di istanza da creare, 
+      - l'ami dell'istanza EC2 (Utilizzare distribuzioni Ubuntu/Debian) da creare, 
+      - l'id del security group (Deve necessariamente garantire l'ingresso a traffico HTTP e SSH proveniente dalla macchina dalla quale si intende fare il deploy. In uscita è importante che venga garantito il passaggio a traffico HTTP),
+      - il nome della chiave privata (creata in precedenza all'interno del servizio EC2. Vedere https://docs.aws.amazon.com/it_it/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
 
- 4) In SEAT_Project/startup.sh è necessario specificare il path assoluto della chiave privata .pem e della directory del progetto
+    * ANSIBLE (file: /SEAT_Project/deploy.yaml) - è possibile fare la copia dell'application directory decommentando le righe da 13 a 17 e modificando la variabile local_app_dir. 
 
- 5) Fare la stessa cosa del punto 4 nel file SEAT_Project/deploy.sh
+2) Specificare in SEAT_Project/startup.sh il path assoluto della chiave privata .pem e della directory del progetto
 
- E' possibile configurare il numero di repliche per il servizio pagamento nel file SEAT_project/run.sh, modificando la variabile d'ambiente SCALE_FACTOR.
+3) Fare la stessa cosa del punto 2 nel file SEAT_Project/deploy.sh
 
-[ESECUZIONE]:
+4) Modificare la variabile d'ambiente SCALE_FACTOR nel file SEAT_project/run.sh per configurare il numero di repliche per il servizio pagamento.
 
-1) Eseguire lo script bash /SEAT_Project/startup.sh per istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS --> Il comando precedente porta alla creazione/modifica del file hosts.ini con l'indirizzo ip della macchina EC2 appena creata. Questo file verrà utilizzato da ansible.
+
+
+
+## ESECUZIONE
+
+1) Istanziare in modo automatico l'istanza EC2, le tabelle di dynamoDB e la coda del servizio SQS. Il comando porta alla creazione/modifica il file hosts.ini (utilizzato da Ansible) con l'indirizzo ip della macchina EC2 appena creata.
 
         bash SEAT_Project/startup.sh
 
-2) Aspettare che l'istanza EC2 sia in esecuzione 
+2) Aspettendere il passaggio di stato dell'istanza EC2 in "in esecuzione"
 
-3) Eseguire lo script SEAT_Project/deploy.sh per eseguire la copia della directory attraverso protocollo scp e per eseguire il deploy in ansible. Attraverso ansible verrà installato docker sulla macchina remota e l'applicazione verrà installata come systemd service.
+3) Eseguire la copia della directory attraverso protocollo scp e successivamente il deploy in ansible. Viene installato docker sulla macchina remota e l'applicazione viene installata come systemd service.
 
         bash SEAT_Project/deploy.sh
 
