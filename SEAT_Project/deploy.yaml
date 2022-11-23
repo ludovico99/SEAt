@@ -95,7 +95,7 @@
 
     - name: Install docker-compose from official github repo
       become: yes # we need root privileges 
-      remote_user: ansible_ubuntu_demo
+      remote_user: ubuntu
       get_url:
         url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
         dest: /usr/local/bin/docker-compose

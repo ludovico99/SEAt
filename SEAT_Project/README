@@ -51,7 +51,32 @@ sudo systemctl stop rabbitmq-server
 sudo systemctl start rabbitmq-server
 
 
+COMANDO DOCKER DAEMON:
+sudo systemctl stop docker
+sudo systemctl start docker
 
+INSTALLARE DOCKER:
+1) 
+sudo wget -O /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/1.28.6/docker-compose-Linux-x86_64
+--2022-11-23 15:36:00--  https://github.com/docker/compose/releases/download/1.28.6/docker-compose-Linux-x86_64	
+sudo chmod +x /usr/bin/docker-compose
+
+2)
+sudo apt install docker-compose
+sudo apt remove docker-compose; sudo apt autoremove
+3)
+pip3 install docker-compose
+pip3 uninstall docker-compose
+
+DISINSTALLARE DOCKER:
+dpkg -l | grep -i docker
+sudo apt-get purge -y docker-engine docker docker.io docker-ce docker-ce-cli docker-compose-plugin
+sudo apt autoremove
+sudo apt update --fix-missing
+sudo ls -la /usr/bin/ | grep docker
+
+DOCKER CONTEXT:
+docker context use default
 
 PASSI PER COMPILARE:
 1)  python -m grpc_tools.protoc -I. --python_out=.\accountingService --grpc_python_out=.\accountingService .\proto\grpc.proto
