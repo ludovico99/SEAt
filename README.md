@@ -88,7 +88,9 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 4) Arrestare l'istanza EC2 e riavviarla. 
 
-5) L'applicazione sarà in esecuzione su http://[indirizzo ip publico della macchina]:80. 
+5) Attendere qualche minuto per consentire il download delle librerie.
+
+6) L'applicazione sarà in esecuzione su http://[indirizzo ip publico della macchina]:80.
 
 NB: Ad ogni arresto e riavvio dell'istanza EC2 l'indirizzo IP pubblico associato viene cambiato.
 
