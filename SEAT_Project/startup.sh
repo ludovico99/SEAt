@@ -1,7 +1,7 @@
 #!/bin/sh
 
-SSH='/home/ludovico99/Scrivania/me-key.pem'
-PROJ_DIR="/home/ludovico99/Scrivania/SEAt/SEAT_Project"
+SSH='/home/elisa/Scrivania/SEAt_keys.pem'
+PROJ_DIR="/home/elisa/Scrivania/SEAt/SEAT_Project"
 
 cd $PROJ_DIR/terraform
 

@@ -2,3 +2,10 @@
 /SEAT_Project/terraform/.terraform
 /SEAT_Project/credentials.sh
 /SEAT_Project/protoc.bat
+/SEAT_Project/serviceRegistry/src/proto/__pycache__
+/SEAT_Project/accountingService/src/proto/__pycache__
+/SEAT_Project/paymentService/src/proto/__pycache__
+/SEAT_Project/quoteService/src/proto/__pycache__
+/SEAT_Project/reservationService/src/proto/__pycache__
+/SEAT_Project/reviewService/src/proto/__pycache__
+

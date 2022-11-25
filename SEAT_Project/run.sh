@@ -20,6 +20,6 @@ echo "SCALE_FACTOR=$SCALE_FACTOR" > config/.env
 
 # sudo usermod -aG docker $USER
 
-# sudo chmod +x /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
 docker-compose --env-file=./config/.env up --scale payment=$SCALE_FACTOR --build

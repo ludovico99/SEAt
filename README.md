@@ -80,7 +80,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
         bash SEAT_Project/startup.sh
 
-2) Aspettendere il passaggio di stato dell'istanza EC2 in "in esecuzione"
+2) Attendere il passaggio di "verifica dello stato" da "inizializzazione in corso" a "2/2 controlli superati"
 
 3) Eseguire la copia della directory attraverso protocollo scp e successivamente il deploy in ansible. Viene installato docker sulla macchina remota e l'applicazione viene installata come systemd service.
 
