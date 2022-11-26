@@ -19,7 +19,7 @@ echo "SCALE_FACTOR=$SCALE_FACTOR" > config/.env
 # fi
 
 # sudo usermod -aG docker $USER
-
+cp /home/ubuntu/.aws/credentials /root/.aws/
 sudo chmod +x /usr/local/bin/docker-compose
 
 docker-compose --env-file=./config/.env up --scale payment=$SCALE_FACTOR --build
