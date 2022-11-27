@@ -94,5 +94,10 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 NB: Ad ogni arresto e riavvio dell'istanza EC2 l'indirizzo IP pubblico associato viene cambiato.
 
+7) Verificare che l'applicazione è running eseguendo sulla macchina remota il comando top. Dovrebbe comparire il seguente output. Se l'applicazione non è attiva riavviare il container.
+
+![Application is successfully running](/immagini/app_is_active.png)
+
+
 
 

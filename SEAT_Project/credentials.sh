@@ -1,15 +1,8 @@
 #!/bin/sh
 
-# PROJ_DIR="/home/ludovico99/Scrivania/SEAt/SEAT_Project/"
-
 echo \
-"" > $HOME/.aws/credentials 
+"[default]
+aws_access_key_id=ASIAZSPXN3SF5EOE5YMW
+aws_secret_access_key=BBf2BW5nkBs454DUYbBQr4TqoP9t398m10o9md2+
+aws_session_token=FwoGZXIvYXdzECMaDIa+elU2VWBJyq7y1CLXATIlrYIZPocJkmCjEqMRs8k+ISuvYWRs5d3sRnLy6h+sFhmnG1NeAaV7VqiFDttuo5RX+LlfYfTWrFCPWvCVzjZouSIS9c2BQOWM++NrNd2jE6SNzrE/eKIpBzxfZ8hUCP4fyJWd24YkSM43y39dkn2I+YmL3YttkfOtH8b+0KOpjZJqTNONd+2n+gosbiZJdX72NgLehfyW5hYF2KwcaxrraFPE8Do0Rp9vXTIJFRU6oOTUyocW0VZ2XWhm692tadRM2m5+x4ml0w+VP58tCvMJx77xcnbQKIrmjJwGMi0PV6aTN9Hy16lj86NIvPJKDkM+fg3q9s83o4c78Vp9HgYvVGsGC45R+fYmVqk=" > $HOME/.aws/credentials 
 
-# cd $PROJ_DIR
-
-# cp $HOME/.aws/credentials ./accountingService/credentials
-# cp $HOME/.aws/credentials ./quoteService/credentials
-# cp $HOME/.aws/credentials ./reservationService/credentials
-# cp $HOME/.aws/credentials ./reviewService/credentials
-# cp $HOME/.aws/credentials ./serviceRegistry/credentials
-# cp $HOME/.aws/credentials ./paymentService/credentials
