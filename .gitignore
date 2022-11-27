@@ -1,6 +1,7 @@
 /SEAT_Project/.idea
 /SEAT_Project/terraform/.terraform
 /SEAT_Project/credentials.sh
+/SEAT_Project/create_instance.sh
 /SEAT_Project/protoc.bat
 /SEAT_Project/serviceRegistry/src/proto/__pycache__
 /SEAT_Project/accountingService/src/proto/__pycache__
