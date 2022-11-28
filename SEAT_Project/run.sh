@@ -1,13 +1,5 @@
 #!/bin/sh
 
-LOCAL_PROJ_DIR="/home/ubuntu/SEAT_Project/"
-
-cd $LOCAL_PROJ_DIR
-
-export SCALE_FACTOR=3
-echo "SCALE_FACTOR=$SCALE_FACTOR" > config/.env
-
-
 # GROUP="docker"
 
 # /bin/egrep  -i "^${GROUP}:" /etc/group
@@ -20,7 +12,13 @@ echo "SCALE_FACTOR=$SCALE_FACTOR" > config/.env
 
 # sudo usermod -aG docker $USER
 
-cp /home/ubuntu/.aws/credentials /root/.aws/
+cp -r /home/ubuntu/.aws/ /root/
+
 sudo chmod +x /usr/local/bin/docker-compose
+
+cd "/home/ubuntu/SEAT_Project/"
+
+export SCALE_FACTOR=3
+echo "SCALE_FACTOR=$SCALE_FACTOR" > config/.env
 
 docker-compose --env-file=./config/.env up --scale payment=$SCALE_FACTOR --build

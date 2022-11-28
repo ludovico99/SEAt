@@ -102,7 +102,7 @@ class AccountingGateway():
             return False, "An Error has occurred" 
         
 
-    def changeAccountCredentials(self,isAdmin, new_password, new_email, new_name, new_place, new_card, username, old_email):
+    def changeAccountCredentials(self,isAdmin, new_password, new_email, new_name, new_place, new_card, username):
         """ Entry point for the change account credentials operation
 
         Args:
@@ -111,15 +111,14 @@ class AccountingGateway():
             new_email (string): new email to insert
             new_name (string): new name to insert
             new_place (string): new place to insert
-            new_card (string): new cardId to inser
+            new_card (string): new cardId to insert
             username (string): Actual username 
-            old_email (string): Actual email
 
         Returns:
             BOOL,String: Returns True if the operation has succeded. The result is associated with a string that explains the final state of the operation
         """
         try:
-            if isValid(new_email) == False:
+            if len(new_email) > 0 and isValid(new_email) == False:
                 return False, "Email inserted is not valid"
 
             if isAdmin == True:
@@ -129,12 +128,12 @@ class AccountingGateway():
             response = self.stubAccounting.updateCredentials(grpc_pb2.updateRequest(
                 username = username,
                 newPassword= new_password , 
-                newEmail = new_email if new_email != "" else old_email,
+                newEmail = new_email,
                 admin = isAdmin,
                 opt = opt ))
-            if len(response) == 0:
+            if len(response.dict) == 0:
                 return False, "An error has occurred"
-            return True, "Your Account credentials have been correctly changed" if response.operationResult == True else False, "Error has been occurred trying to update credentials"
+            return True, "Your Account credentials have been correctly changed"
         
         except Exception as e:
             print(repr(e))

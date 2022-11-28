@@ -80,13 +80,13 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
         bash SEAT_Project/startup.sh
 
-2) Attendere il passaggio di "verifica dello stato" da "inizializzazione in corso" a "2/2 controlli superati"
+2) Attendere il passaggio di "verifica dello stato" da "inizializzazione in corso" a "2/2 controlli superati". Non è strettamente necessario ma siamo sicuri che l'istanza è correttamente running.
 
 3) Eseguire la copia della directory attraverso protocollo scp e successivamente il deploy in ansible. Viene installato docker sulla macchina remota e l'applicazione viene installata come systemd service.
 
         bash SEAT_Project/deploy.sh
 
-4) Arrestare l'istanza EC2 e riavviarla. 
+4) Riavviare l'istanza EC2. 
 
 5) Attendere qualche minuto (circa 8) per consentire il download delle librerie.
 

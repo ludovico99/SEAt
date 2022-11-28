@@ -35,6 +35,7 @@ def createTables():
                     keySchema.append({'AttributeName': key,'KeyType': 'HASH'})
                 else :
                     keySchema.append({'AttributeName': key,'KeyType': 'RANGE'})
+
                 attributeDefinitions.append({'AttributeName': key,'AttributeType': tables[table_name][key]})
                 count += 1
             
@@ -44,11 +45,7 @@ def createTables():
                 AttributeDefinitions=attributeDefinitions,
                 BillingMode= "PAY_PER_REQUEST",
             )
-
-            waiter = dynamodb.get_waiter('table_exists')
-            waiter.wait(TableName=table_name)
             
-    return notExists
+    print(json.dumps(notExists)) 
 
-
-print(json.dumps(createTables()))
+createTables()

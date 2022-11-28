@@ -1,11 +1,11 @@
 ---
 - hosts: all
-  vars:
-   # local_app_dir: "/home/ludovico99/Scrivania/SEAt/SEAT_Project"
-    remote_home: "/home/ubuntu"
-    remote_app_dir: "{{remote_home}}/SEAT_Project"
-    local_aws_cred: "/$HOME/.aws/credentials"
-    remote_aws_cred: "{{remote_home}}/.aws/credentials"
+  # vars:
+  #  local_app_dir: "/home/ludovico99/Scrivania/SEAt/SEAT_Project"
+  #   remote_home: "/home/ubuntu"
+  #   remote_app_dir: "{{remote_home}}/SEAT_Project"
+  #   local_aws_cred: "/$HOME/.aws/credentials"
+  #   remote_aws_cred: "{{remote_home}}/.aws/credentials"
 
 
   tasks:

@@ -370,32 +370,53 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
         Returns:
             grpc_2.session: GRPC auto-generated message that contains newest credentials (if currectly updated) for that user
         """
-        #dict = {"password" : updateReq.newPassword, "email": updateReq.newEmail}
         transactions = []
+        aux = []
+        username = updateReq.username
+        password = updateReq.newPassword
+        email = updateReq.newEmail
         try:
+            if updateReq.opt == None and updateReq.admin == True:
+                return grpc_pb2.session (dict = [])
+
+
             if (updateReq.opt != None):
                 print(updateReq.newPassword, updateReq.newEmail, updateReq.opt.beachClubName,
                 updateReq.opt.location,updateReq.opt.cardId)
+
             else : 
-                
-                print( updateReq.newPassword, updateReq.newEmail)
-                update = self.db.updateTransaction ([['username','S',updateReq.username]],[['password','S',updateReq.newPassword]],'utenti')
-                
-                transactions.append(update)   
-        
-            if (updateReq.admin == True):
-                update = self.db.updateTransaction ([['username','S',updateReq.username]],
-                [['nomeLido','S',updateReq.opt.beachClubName],['luogo','S',updateReq.opt.location],['cardId','S',updateReq.opt.cardId]],'dettagliLido')
-                
+                print(updateReq.newPassword, updateReq.newEmail)
+
+
+            if len (password) > 0:
+                aux.append(['password','S',password])  
+            if  len (email) > 0:
+                aux.append(['email','S',email])
+            if len(aux) > 0:
+                update = self.db.updateTransaction ([['username','S',username]],aux,'utenti')
                 transactions.append(update) 
 
-                print(update)
+            if updateReq.opt != None and updateReq.admin == True:
+                beachClub = updateReq.opt.beachClubName
+                location = updateReq.opt.location
+                cardId = updateReq.opt.cardId
+                aux = []
+                    
+                if len(beachClub) > 0:
+                    aux.append(['nomeLido','S',beachClub])
+                if len(location) > 0:
+                    aux.append(['luogo','S',location])
+                if len(cardId) > 0:
+                    aux.append(['cardId','S',cardId])
+                if len (aux) > 0:
+                    update = self.db.updateTransaction ([['username','S',updateReq.username]],aux,'dettagliLido')
+                    transactions.append(update) 
 
-           
-            response,msg =self.db.executeTransaction (transactions)
-
-            if response == False:
-                return grpc_pb2.session (dict = []) 
+            print(transactions)
+            if len(transactions) > 0:        
+                response,msg =self.db.executeTransaction (transactions)
+                if response == False:
+                    return grpc_pb2.session (dict = []) 
 
             list = []
             list.append(grpc_pb2.dictionary(key = "username", value=updateReq.username))
@@ -404,7 +425,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
             response = grpc_pb2.session(dict = list)
 
         except Exception as e:
-            print("non esistono campi da aggiornare nella tabella")
+            print("Non esistono campi da aggiornare nella tabella")
             print(repr(e))
             return grpc_pb2.session (dict = [])
       

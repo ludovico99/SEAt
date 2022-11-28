@@ -207,11 +207,11 @@ def configureCredentials():
         new_name = request.form['new_name']
         new_place = request.form['new_place']
         new_card = request.form['new_card']
-        response,msg = aG.changeAccountCredentials(True, new_password, new_email, new_name, new_place, new_card, session['username'], session['email'])
+        response,msg = aG.changeAccountCredentials(True, new_password, new_email, new_name, new_place, new_card, session['username'])
         if response == True:
-            session['username'] = new_name
             session['tipoUtente'] = True
-            session['email'] = new_email
+            if len (new_email) > 0:
+                session['email'] = new_email
         flash (msg)
         return redirect('/admin/accounting/credenziali')
     return render_template('accounting_accountAdmin.html')
@@ -251,10 +251,11 @@ def configureUserCredentials():
     if request.method == "POST":
         new_password = request.form['new_password']
         new_email = request.form['new_email']
-        response = aG.changeAccountCredentials(False, new_password, new_email, None, None, None, session['username'], session['email'])        
+        response = aG.changeAccountCredentials(False, new_password, new_email, None, None, None, session['username'])        
         if response == True:
             session['tipoUtente'] = False
-            session['email'] = new_email
+            if len(new_email) > 0:
+                session['email'] = new_email 
         flash("Credenziali aggiornate!")   
 
         return redirect('/utente/accounting/credenziali')
