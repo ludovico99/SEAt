@@ -207,7 +207,8 @@ def configureCredentials():
         new_name = request.form['new_name']
         new_place = request.form['new_place']
         new_card = request.form['new_card']
-        response,msg = aG.changeAccountCredentials(True, new_password, new_email, new_name, new_place, new_card, session['username'])
+        new_cvc = request.form['new_cvc']
+        response,msg = aG.changeAccountCredentials(True, new_password, new_email, new_name, new_place, new_card,new_cvc, session['username'])
         if response == True:
             session['tipoUtente'] = True
             if len (new_email) > 0:
@@ -251,7 +252,7 @@ def configureUserCredentials():
     if request.method == "POST":
         new_password = request.form['new_password']
         new_email = request.form['new_email']
-        response = aG.changeAccountCredentials(False, new_password, new_email, None, None, None, session['username'])        
+        response = aG.changeAccountCredentials(False, new_password, new_email, None, None, None,None, session['username'])        
         if response == True:
             session['tipoUtente'] = False
             if len(new_email) > 0:

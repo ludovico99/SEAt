@@ -62,7 +62,7 @@ message adminOptions {
     string beachClubName = 1;
     string location = 2;
     string cardId = 3;
-    int32 cvc = 4;
+    string cvc = 4;
     bool ristorazione = 5;
     bool bar = 6;
     bool campi = 7;
@@ -275,7 +275,7 @@ message operation {
     string op = 1;
     string username = 2;
     string cardId = 3;
-    int32 cvc = 4;
+    string cvc = 4;
     int32 credito = 5;
 }
 
@@ -288,7 +288,7 @@ message creditDetails {
     string username = 1;
     string cardId = 2;
     int32 credito = 3;
-    int32 cvc = 4;
+    string cvc = 4;
 }
 
 message cardsResponse {
@@ -298,7 +298,7 @@ message cardsResponse {
 message cardDetails {
     string cardId = 1;
     int32 credito = 2;
-    int32 cvc = 3;
+    string cvc = 3;
     int32 id = 4;
 }
 

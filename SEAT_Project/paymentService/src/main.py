@@ -191,7 +191,7 @@ class PaymentServicer(grpc_pb2_grpc.PaymentServicer):
             aux[4:12]= "********"
             toShow = "".join(aux)
             print("{}) CardID:{}, CREDITO disponibile: {}".format(i+1,toShow,items[i][4]))
-            response.append(grpc_pb2.cardDetails(cardId = toShow, credito=items[i][4], cvc = int(items[i][3]), id=int(items[i][0])))
+            response.append(grpc_pb2.cardDetails(cardId = toShow, credito=items[i][4], cvc = items[i][3], id=int(items[i][0])))
         return grpc_pb2.cardsResponse(cards = response)
   
 

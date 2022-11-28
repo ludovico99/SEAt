@@ -73,7 +73,7 @@ class PaymentGateway():
         
         list = []
         list.append(grpc_pb2.dictionary(key = "username", value=lido_id))
-        list.append(grpc_pb2.dictionary(key = "tipoUtente", value=type))
+        list.append(grpc_pb2.dictionary(key = "tipoUtente", value=str(type)))
         list.append(grpc_pb2.dictionary(key = "email", value = email))
         sessione = grpc_pb2.session(dict = list)
         
@@ -118,12 +118,13 @@ class PaymentGateway():
             _type_: _description_
         """
 
-        if len(cardId) < 16: return False 
-        elif len(cvc) < 3: return False
+        
+        if not str(cardId.isnumeric()) or len(cardId) != 16: return False 
+        elif not str(cvc.isnumeric()) or len(cvc) != 3: return False
         elif int(credito) < 0: return False
 
 
         # response = self.stubPayment.insertCreditCard(grpc_pb2.creditDetails(username =username,
         response = self.stubs[0].insertCreditCard(grpc_pb2.creditDetails(username =username,
-            cardId = cardId, cvc = int(cvc),credito = credito))
+            cardId = cardId, cvc = cvc,credito = credito))
         return True if response.operationResult == True else False

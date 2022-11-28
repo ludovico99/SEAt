@@ -102,7 +102,7 @@ class AccountingGateway():
             return False, "An Error has occurred" 
         
 
-    def changeAccountCredentials(self,isAdmin, new_password, new_email, new_name, new_place, new_card, username):
+    def changeAccountCredentials(self,isAdmin, new_password, new_email, new_name, new_place, new_card,new_cvc, username):
         """ Entry point for the change account credentials operation
 
         Args:
@@ -121,8 +121,14 @@ class AccountingGateway():
             if len(new_email) > 0 and isValid(new_email) == False:
                 return False, "Email inserted is not valid"
 
+            if new_card != None and len(new_card) != 0 and (not str(new_card).isnumeric() or len(new_card) != 16):
+                return False, "Card id inserted is not valid"
+
+            if new_cvc != None and len(new_cvc) != 0 and (not str(new_cvc).isnumeric() or len(new_cvc) != 3):
+                return False, "CVC inserted is not valid"
+
             if isAdmin == True:
-                opt = grpc_pb2.adminOptions(beachClubName = new_name, location=new_place , cardId = new_card)
+                opt = grpc_pb2.adminOptions(beachClubName = new_name, location=new_place , cardId = new_card, cvc = new_cvc)
             else:
                 opt = None
             response = self.stubAccounting.updateCredentials(grpc_pb2.updateRequest(
@@ -178,18 +184,19 @@ class AccountingGateway():
         try:
             if isValid(email) == False:
                 return False, "Email inserted is not valid"
+
             if admin == True:
-                if len(cardId) < 16:
+                if not str(cardId).isnumeric() or len(cardId) != 16:
                     return False, "CardId inserted is not valid"
                 
-                if len(cvc) < 3:
+                if not str(cvc).isnumeric() or len(cvc) != 3:
                      return False, "CVC inserted is not valid"
             
             adminOptions = grpc_pb2.adminOptions(
                 beachClubName=beachClubName, 
                 location=location, 
                 cardId=cardId,
-                cvc = int(cvc) ,
+                cvc = cvc,
                 ristorazione=details[0], 
                 bar=details[1], 
                 campi=details[2], 
