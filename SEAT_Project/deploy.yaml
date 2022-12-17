@@ -1,33 +1,26 @@
 ---
 - hosts: all
-  # vars:
-  #  local_app_dir: "/home/ludovico99/Scrivania/SEAt/SEAT_Project"
-  #   remote_home: "/home/ubuntu"
-  #   remote_app_dir: "{{remote_home}}/SEAT_Project"
-  #   local_aws_cred: "/$HOME/.aws/credentials"
-  #   remote_aws_cred: "{{remote_home}}/.aws/credentials"
+  vars:
+  #  local_app_dir: "/home/ludovico99/Scrivania/SEAt/SEAT_Project"
+    local_home: "{{ lookup('env','HOME') }}"
+    remote_home: "/home/ubuntu"
+  #   remote_app_dir: "{{remote_home}}/SEAT_Project"
+    local_aws_cred: "{{local_home}}/.aws"
+    remote_aws_cred: "{{remote_home}}/"
 
 
-  tasks:
-  
-    # - name: copy application directory
-    #   copy:
-    #     src: "{{ local_app_dir }}/"
-    #     dest: "{{ remote_app_dir }}"
-    #   register: app  # save task output 
+ tasks:
+# - name: copy application directory
+#   copy:
+#     src: "{{ local_app_dir }}/"
+#     dest: "{{ remote_app_dir }}"
+#   register: app  # save task output
 
 
-    # - name: ansible create .aws directory 
-    #   file:
-    #     path: "{{remote_home}}/.aws"
-    #     mode: "u=rwx,g=rwx,o=rwx"
-    #     recurse: yes
-    #     state: directory
-
-    # - name: copy aws credentials
-    #   copy:
-    #     src: "{{ local_aws_cred }}"
-    #     dest: "{{ remote_aws_cred }}"
+  - name: copy aws credentials
+    copy:
+      src: "{{ local_aws_cred }}"
+      dest: "{{ remote_aws_cred }}"
 
     - name: install python 3
       become: yes # we need root privileges 

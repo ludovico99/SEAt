@@ -481,7 +481,7 @@ class AccountingServicer(grpc_pb2_grpc.AccountingServicer):
                 beachClubName=username,
                 location=data[0]['luogo'],
                 cardId=" ", 
-                cvc=0, 
+                cvc= "0", 
                 ristorazione=data[0]['ristorazione'],
                 bar=data[0]['bar'],
                 campi=data[0]['campi'],

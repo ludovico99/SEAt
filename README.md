@@ -2,13 +2,15 @@
 How-to basato su distribuzione Linux Ubuntu/Debian
 
 ### INDICE: 
+- ARCHITETTURA di SEAt
 - INSTALLAZIONE: ottenere la copia locale del codice
 - PREREQUISITI: dettagli sull'installazione di AWS CLI, Terraform e Ansible. Saltare se già installati
 - CONFIGURAZIONE: dettagli per eseguire il codice
 - ESECUZIONE: istruzioni per l'avvio dell'applicazione                                          
 
-
-
+## ARCHITETTURA
+        
+        ![Archittetura](/immagini/Architettura.png)
 
 ## INSTALLAZIONE
 

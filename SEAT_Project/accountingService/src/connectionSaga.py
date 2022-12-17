@@ -96,11 +96,11 @@ class ConnectionSaga (Connection):
             #request = "{}:{}:{}".format(username,admin,"DELETE operation ended successfully")  
             response = body.decode("utf-8").split(':')
             esito = response[0]
-            if esito == SUCCESS:
-                self.msg = "Email sent"
+            if esito == "SUCCESS":
+                self.msg = "Delete has succeded"
                 self.outcome = False
             else:
-                self.msg = "Email sending failed"
+                self.msg = "Delete has failed"
                 self.outcome = True
             print("\nMessage from Payment_response: {}".format(response))
             print("ROUTING TO: {}".format(properties.reply_to))

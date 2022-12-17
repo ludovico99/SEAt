@@ -354,7 +354,7 @@ def newAccount():
         if admin == "2":
             adminBool = False
             beachClubName = location = cardId = None
-            cvc = 0
+            cvc = "0"
         else:
             adminBool = True
             beachClubName = request.form['lido']
