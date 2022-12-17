@@ -10,7 +10,7 @@ How-to basato su distribuzione Linux Ubuntu/Debian
 
 ## ARCHITETTURA
         
-        ![Archittetura](/immagini/Architettura.png)
+![Archittetura](/immagini/Architettura.png)
 
 ## INSTALLAZIONE
 
